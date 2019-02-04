@@ -1,0 +1,433 @@
+\documentclass[a4paper,12pt,openany]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[italian]{babel}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{stmaryrd}
+\usepackage{mathptmx}  % Font
+\usepackage{relsize}   % Displaystyle for math symbols
+\usepackage[linktocpage=true,hyperfootnotes=false,colorlinks=true,linkcolor=orange]{hyperref}  % Link nell'indice
+\usepackage{microtype} % migliora l'uso di spazi e rientri
+\usepackage{bbding}    % New symbols for itemize
+\usepackage{setspace}  % Permette di personalizzare l'interlinea
+\usepackage{graphicx}  % Permette di includere figure
+\usepackage{wrapfig}
+\usepackage{booktabs}  % Creazione tabelle
+\usepackage{caption}   % Permette la personalizzazione delle didascalie e la loro aggiunta in tabelle
+\usepackage[wide]{sidecap}  % Permette di mettere didascalie laterali a figure e tabelle
+\usepackage{subfig}    % Crea sottofigure o sottotabelle
+\usepackage[]{xcolor}  % Add colors
+\usepackage{multicol}
+\usepackage{tikz}				% includo il pacchetto per disegnare la FSM
+\usetikzlibrary{ arrows,automata}
+\usepackage{listings}
+
+\lstset{columns=fullflexible,
+    mathescape=true,
+    literate=
+        {=}{$\leftarrow{}$}{1}
+        {==}{$={}$}{1}
+        {!=}{$\neq$}{1}
+        {<=}{$\leq$}{1}
+        {>=}{$\geq$}{1}
+        {^2}{$^2$}{1},
+    morekeywords={if,then,else,return}
+}
+
+\renewcommand\labelitemi{\footnotesize\SnowflakeChevron}
+
+\newcommand{\TL}{T\!L}
+\newcommand{\VB}{V\!B}
+\newcommand{\RD}{R\!D}
+
+\title{Analisi Statica}
+\date{}
+
+\begin{document}
+    \maketitle
+    
+    \textbf{Prima distinzione}:
+    \begin{itemize}
+        \item Forward
+        \begin{align*}
+            \mbox{FAin}(n) = 
+            \begin{cases}
+                \emptyset & n=entry\\
+                \bigoplus\limits_{m\in \mbox{Pred}(n)} \mbox{FAout}(m) & \mbox{otherwise}
+            \end{cases}&\\[1em]
+            \mbox{FAout}(m) = \tau(\mbox{FAin}(m))&\\
+            \tau(\mbox{FAin}(m)) = \mbox{gen}(m) \cup (\mbox{FAout}(m) &\setminus \mbox{kill}(m))
+        \end{align*}
+        \item Backward
+        \begin{align*}
+            \mbox{BAout}(n) =
+            \begin{cases}
+                \emptyset & n=exit\\
+                \bigoplus\limits_{m\in \mbox{Succ}(n)} \mbox{BAin}(m) & \mbox{otherwise}
+            \end{cases}&\\[1em]
+            \mbox{BAin}(m) = \tau(\mbox{BAout}(m))&\\
+            \tau(\mbox{BAout}(m)) = \mbox{gen}(m) \cup (\mbox{BAin}(m) &\setminus \mbox{kill}(m))
+        \end{align*}
+    \end{itemize}
+
+    \textbf{Seconda distinzione}:
+    \begin{itemize}
+        \item Possible analysis: $\bigoplus = \bigcup$
+        \item Definite analysis: $\bigoplus = \bigcap$
+    \end{itemize}
+    
+    \section*{Available Expressions}
+    \textbf{Forward \& Definite}
+    \begin{align*}
+        \mbox{AvailIn}(n) &=
+        \begin{cases}
+            \emptyset & n = entry\\
+            \bigcap\limits_{m\in \mbox{Pred}(n)} \mbox{AvailOut}(m)
+        \end{cases}\\
+        \mbox{AvailOut}(m) &= \mbox{Gen}(m) \cup (\mbox{AvailIn}(m) \setminus \mbox{Kill}(m))\\
+        \mbox{Gen}_A(n) &= \left\{
+            x \leftarrow e \;\Bigg\vert
+            \begin{array}{cc}
+                x \leftarrow e \in n\\
+                \land\\
+                x \notin \mbox{Var}(e)
+            \end{array}
+        \right\}\\
+        \mbox{Kill}_A(n) &= \left\{
+            x \leftarrow e \;\big\vert\, \exists y \leftarrow e' \in n.\; \big( y \in \mbox{Var}(e) \,\lor\, y=x \big)
+        \right\}
+    \end{align*}
+    
+    \textbf{Semantica}
+    \begin{align*}
+        \mbox{Dominio: }& \mathbb{P}(\mbox{assign})\\
+        \llbracket ; \rrbracket^\#A &= A\\
+        \llbracket \mbox{zero}(e) \rrbracket^\#A &= A\\
+        \llbracket \mbox{non-zero}(e) \rrbracket^\#A &= A\\
+        \llbracket M[e_1]\leftarrow e_2 \rrbracket^\#A &= A\\
+        \llbracket x \leftarrow e \rrbracket^\#A &=
+        \begin{cases}
+            A \setminus \mbox{Occ}(x) \cup \{x\leftarrow e\} & x\notin \mbox{Var}(e)\\
+            A \setminus \mbox{Occ}(x) & \mbox{otherwise}
+        \end{cases}\\
+        \llbracket x\leftarrow M[e] \rrbracket^\#A &= A\setminus \mbox{Occ}(x)\\
+        \mbox{{\footnotesize where} Occ}(x) &=
+        \left\{
+            y\leftarrow e \;\Bigg\vert
+            \begin{array}{cc}
+                x \in \mbox{Var}(e)\\
+                \lor\\
+                y=x
+            \end{array}
+        \right\}
+    \end{align*}
+    
+    
+    \section*{Liveness}
+    \textbf{Backward \& Possible}
+    \begin{align*}
+    \mbox{LiveOut}(n) &=
+    \begin{cases}
+        \emptyset & n = exit\\
+        \bigcup\limits_{m\in \mbox{Succ}(n)} \mbox{LiveIn}(m)
+    \end{cases}\\
+    \mbox{LiveIn}(m) &= \mbox{Gen}(m) \cup (\mbox{LiveOut}(m) \setminus \mbox{Kill}(m))\\
+    \mbox{Gen}_{L}(n) &= \left\{
+    x \;\big\vert\; \exists e \in n.\; x\in\mbox{Var}(e)
+    \right\}\\
+    \mbox{Kill}_{L}(n) &= \left\{
+    x \;\big\vert\; \exists x\leftarrow e \in n
+    \right\}
+    \end{align*}
+    
+    \textbf{Semantica}
+    \begin{align*}
+    \mbox{Dominio: }& \mathbb{P}(\mbox{Var})\\
+    \llbracket ; \rrbracket^\#L &= L\\
+    \llbracket \mbox{zero}(e) \rrbracket^\#L &= L \cup \mbox{Var}(e)\\
+    \llbracket \mbox{non-zero}(e) \rrbracket^\#L &= L \cup \mbox{Var}(e)\\
+    \llbracket M[e_1]\leftarrow e_2 \rrbracket^\#L &= L \cup \mbox{Var}(e_1) \cup \mbox{Var}(e_2)\\
+    \llbracket x \leftarrow e \rrbracket^\#L &= (L\setminus \{x\}) \cup \mbox{Var}(e)\\
+    \llbracket x\leftarrow M[e] \rrbracket^\#L &= (L\setminus \{x\}) \cup \mbox{Var}(e)\\
+    \end{align*}
+    
+    
+    \section*{True Liveness}
+    \textbf{Backward \& Possible}
+    \begin{align*}
+    \mbox{TLiveOut}(n) &=
+    \begin{cases}
+    \emptyset & n = exit\\
+    \bigcup\limits_{m\in \mbox{Succ}(n)} \mbox{TLiveIn}(m)
+    \end{cases}\\
+    \mbox{TLiveIn}(m) &= \mbox{Gen}(m) \cup (\mbox{TLiveOut}(m) \setminus \mbox{Kill}(m))\\
+    \mbox{Gen}_{\TL}(n) &= \left\{
+    x \;\big\vert\; x \in \TL \land \exists e \in n.\; x\in\mbox{Var}(e)
+    \right\}\\
+    \mbox{Kill}_{\TL}(n) &= \left\{
+    x \;\big\vert\; \exists x\leftarrow e \in n
+    \right\}
+    \end{align*}
+    
+    \textbf{Semantica}
+    \begin{align*}
+    \mbox{Dominio: }& \mathbb{P}(\mbox{Var})\\
+    \llbracket ; \rrbracket^\#\TL &= \TL\\
+    \llbracket \mbox{zero}(e) \rrbracket^\#\TL &= \TL \cup \mbox{Var}(e)\\
+    \llbracket \mbox{non-zero}(e) \rrbracket^\#\TL &= \TL \cup \mbox{Var}(e)\\
+    \llbracket M[e_1]\leftarrow e_2 \rrbracket^\#\TL &= \TL \cup \mbox{Var}(e_1) \cup \mbox{Var}(e_2)\\
+    \llbracket x \leftarrow e \rrbracket^\#\TL &=
+    \begin{cases}
+        (\TL\setminus \{x\}) \cup \mbox{Var}(e) & x\in\TL\\
+        (\TL\setminus \{x\}) & \mbox{otherwise}
+    \end{cases}\\
+    \llbracket x\leftarrow M[e] \rrbracket^\#\TL &=
+    \begin{cases}
+        (\TL\setminus \{x\}) \cup \mbox{Var}(e) & x\in\TL\\
+        (\TL\setminus \{x\}) & \mbox{otherwise}
+    \end{cases}\\
+    \end{align*}
+
+
+    \section*{Very Busy Expressions}
+    \textbf{Backward \& Definite}
+    \begin{align*}
+    \mbox{\VB Out}(n) &=
+    \begin{cases}
+    \emptyset & n = exit\\
+    \bigcap\limits_{m\in \mbox{Succ}(n)} \mbox{\VB In}(m)
+    \end{cases}\\
+    \mbox{\VB In}(m) &= \mbox{Gen}(m) \cup (\mbox{\VB Out}(m) \setminus \mbox{Kill}(m))\\
+    \mbox{Gen}_{\VB}(n) &= \left\{
+    x\leftarrow e \in n\;\big\vert\; x \notin\mbox{Var}(e)
+    \right\}\\
+    \mbox{Kill}_{\VB}(n) &= \left\{
+        x\leftarrow e \;\Big\vert\; \exists y\leftarrow e'\in n.\,
+        \begin{array}{cc}
+            x\in \mbox{Var}(e')\quad\lor\\
+            y\in \mbox{Var}(e)\;\quad\lor\\
+            x = y
+        \end{array}
+    \right\}
+    \end{align*}
+    
+    \textbf{Semantica}
+    \begin{align*}
+    \mbox{Dominio: }& \mathbb{P}(\mbox{Ass})\\
+    \llbracket ; \rrbracket^\#\VB &= \VB\\
+    \llbracket \mbox{zero}(e) \rrbracket^\#\VB &= \VB \setminus \mbox{Ass}(e)\\
+    \llbracket \mbox{non-zero}(e) \rrbracket^\#\VB &= \VB \setminus \mbox{Ass}(e)\\
+    \llbracket M[e_1]\leftarrow e_2 \rrbracket^\#\VB &= \VB \setminus (\mbox{Ass}(e_1) \cup \mbox{Ass}(e_2))\\
+    \llbracket x \leftarrow e \rrbracket^\#\VB &= 
+    \begin{cases}
+    \VB \setminus (\mbox{Occ}(x) \cup \mbox{Ass}(e)) \cup \{x\leftarrow e\}& \mbox{if } x \notin \mbox{Var}(e)\\
+    \VB \setminus (\mbox{Occ}(x) \cup \mbox{Ass}(e)) & \mbox{otherwise}
+    \end{cases}\\
+    \llbracket x\leftarrow M[e] \rrbracket^\#\VB &= \VB \setminus (\mbox{Occ}(x) \cup \mbox{Ass}(e))\\[1em]
+    \mbox{{\footnotesize where} Occ}(x) &=
+    \left\{
+        y\leftarrow e \;\Bigg\vert
+        \begin{array}{cc}
+            x \in \mbox{Var}(e)\\
+            \lor\\
+            y=x
+        \end{array}
+    \right\}\\
+    \mbox{{\footnotesize and} Ass}(e) &=
+    \left\{
+    y\leftarrow e' \in Ass \;\big\vert\;
+    y \in \mbox{Var}(e) \,\land\, e \neq M[e]
+    \right\}\\
+    \end{align*}
+
+
+    \section*{Reaching Definitions}
+    \textbf{Forward \& Possible}
+    \begin{align*}
+        \mbox{\RD In}(n) &=
+        \begin{cases}
+            \emptyset & n = entry\\
+            \bigcup\limits_{m\in \mbox{Pred}(n)} \mbox{\RD Out}(m)
+        \end{cases}\\
+        \mbox{\RD Out}(m) &= \mbox{Gen}(m) \cup (\mbox{\RD In}(m) \setminus \mbox{Kill}(m))\\
+        \mbox{Gen}_{\RD}(n) &= \left\{
+            (x,n) \;\big\vert\; \exists x\leftarrow e \in n
+        \right\}\\
+        \mbox{Kill}_{\RD}(n) &= \left\{
+            (x,n') \;\big\vert\; \exists x\leftarrow e \in n \land \exists (x,n')\in\RD(n)
+        \right\}
+    \end{align*}
+    
+    \textbf{Semantica}
+    \begin{align*}
+        \mbox{Dominio: }& \mathbb{P}(\mbox{Var $\times$ ProgPoints})\\
+        \llbracket ; \rrbracket^\#\RD &= \RD\\
+        \llbracket \mbox{zero}(e) \rrbracket^\#\RD &= \RD\\
+        \llbracket \mbox{non-zero}(e) \rrbracket^\#\RD &= \RD\\
+        \llbracket M[e_1]\leftarrow e_2 \rrbracket^\#\RD &= \RD\\
+        \llbracket x \leftarrow e \rrbracket^\#\RD &= (\RD\setminus \mbox{Def}(x)) \cup
+        \left\{
+            (x, v) \;\big\vert\, K = (u, x\leftarrow e, v)
+        \right\}\\
+        \llbracket x\leftarrow M[e] \rrbracket^\#\RD &= (\RD\setminus \mbox{Def}(x)) \cup
+        \left\{
+        (x, v) \;\big\vert\, K = (u, x\leftarrow e, v)
+        \right\}\\[1em]
+        \mbox{{\footnotesize where} Def}(x) &=
+        \left\{
+            (x, n) \;\big\vert\, n \mbox{ punto di programma}
+        \right\}\\
+        \mbox{\footnotesize and } K &= 
+        \begin{array}{ll}
+            \mbox{Arco che stiamo analizzando, rappresentato da una}\\
+            \mbox{tupla di: [nodo di partenza, istruzione, nodo di arrivo]}
+        \end{array}
+    \end{align*}
+
+
+    \section*{Copy Propagation}
+    \textbf{Forward \& Definite}
+    \begin{align*}
+        \mbox{CopyIn}(n) &=
+        \begin{cases}
+        \emptyset & n = entry\\
+        \bigcap\limits_{m\in \mbox{Pred}(n)} \mbox{CopyOut}(m)
+        \end{cases}\\
+        \mbox{CopyOut}(m) &= \mbox{Gen}(m) \cup (\mbox{CopyIn}(m) \setminus \mbox{Kill}(m))\\
+        \mbox{Gen}_{C}(n) &= \left\{
+        (x\; y) \;\big\vert\; \exists\, x\leftarrow y \in n
+        \right\}\\
+        \mbox{Kill}_{C}(n) &= \left\{
+        (x\; y) \;\big\vert\; \exists\, x\leftarrow e \in n \,\lor\, \exists\, y\leftarrow e \in n
+        \right\}
+    \end{align*}
+    
+    \textbf{Semantica}
+    \begin{align*}
+        \mbox{Dominio: }& \mathbb{P}(\mbox{Var $\times$ Var})\\
+        \llbracket ; \rrbracket^\#C &= C\\
+        \llbracket \mbox{zero}(e) \rrbracket^\#C &= C\\
+        \llbracket \mbox{non-zero}(e) \rrbracket^\#C &= C\\
+        \llbracket M[e_1]\leftarrow e_2 \rrbracket^\#C &= C\\
+        \llbracket x \leftarrow e \rrbracket^\#C &= C\setminus \mbox{Copie}(x)\quad e\notin Var\\
+        \llbracket x \leftarrow M[e] \rrbracket^\#C &= C\setminus \mbox{Copie}(x)\\
+        \llbracket x\leftarrow y \rrbracket^\#C &= (C\setminus \mbox{Copie}(x)) \cup
+        \left\{
+            (x\; z) \;\big\vert\; (z\; y) \in C
+        \right\}\\[1em]
+        \mbox{{\footnotesize where} Copie}(x) &=
+        \left\{
+        (x\; y) \;\big\vert\, (x\; y) \in C
+        \right\}\\
+    \end{align*}
+    
+    
+    \section*{Intervals}
+    \textbf{Non-Distributive, Forward \& Possible}
+
+    \textbf{Semantica}
+    \begin{align*}
+    \mbox{Dominio: }& \mathbb{I}=\{[l,\,u]\;\big\vert\; l\in\mathbb{Z}\cup\{-\infty\},\; u\in\mathbb{Z}\cup\{+\infty\},\; l\leq u\}\\
+    \llbracket ; \rrbracket^\#I &= I\\
+    \llbracket \mbox{zero}(e) \rrbracket^\#I &= 
+    \begin{cases}
+        \bot & [0, 0] \not\sqsubseteq \llbracket e \rrbracket^\#I\\
+        I & otherwise
+    \end{cases}\\
+    \llbracket \mbox{non-zero}(e) \rrbracket^\#I &= 
+    \begin{cases}
+        \bot & [0, 0] = \llbracket e \rrbracket^\#I\\
+        I & otherwise
+    \end{cases}\\
+    \llbracket M[e_1]\leftarrow e_2 \rrbracket^\#I &= I\\
+    \llbracket x \leftarrow e \rrbracket^\#I &= I\oplus \{x\mapsto\llbracket e \rrbracket^\#I\}\\
+    \llbracket x \leftarrow M[e] \rrbracket^\#I &= I\oplus \{x\mapsto\top\}
+    \end{align*}
+
+    \newpage
+    \section*{Esercizi}
+    \subsection*{Available Expressions}
+    \begin{multicols}{2}
+    \textbf{Codice}
+    \begin{lstlisting}{}
+        y = 1;
+        v = x;
+        while y != z
+            t = 2y;
+            if t <= z then
+                v = v^2;
+                y = 2y;
+            else
+                v = vx;
+                y = y+1;
+    \end{lstlisting}
+    \columnbreak
+    
+    \textbf{CFG - MOP}\\
+    \begin{wrapfigure}{l}{0.5\textwidth}
+    \begin{tikzpicture}[>=stealth',auto,node distance=1.2cm]
+    
+    \node[label=right: $^0$] (0) {entry};
+    \node[draw, below of=0, label=right: $^1$] (1) {$y\leftarrow1$};
+    \node[draw, below of=1, label=right: $^2$] (2) {$v\leftarrow x$};
+    \node[draw, below of=2, label=left: $^3$] (3) {$y\neq x$};
+    \node[draw, below of=3, label=right: $^4$] (4) {$t\leftarrow2y$};
+    \node[draw, below of=4, label=right: $^5$] (5) {$t\leq z$};
+    \node[node distance = 2cm, draw, below left of=5, label=right: $^6$] (6) {$v\leftarrow v^2$};
+    \node[draw, below of=6, label=right: $^7$] (7) {$y\leftarrow2y$};
+    \node[node distance = 2cm, draw, below right of=5, label=right: $^8$] (8) {$v\leftarrow vx$};
+    \node[draw, below of=8, label=right: $^9$] (9) {$y\leftarrow y+1$};
+    \node[node distance = 3cm, right of=3, label=right: $^{10}$] (10) {exit};
+    
+    \path[->] (0) edge (1)
+              (1) edge (2)
+              (2) edge (3)
+              (3) edge (4)
+              (4) edge (5)
+              (5) edge (6)
+              (5) edge (8)
+              (6) edge (7)
+              (7) edge[bend left=65] (3)
+              (8) edge (9)
+              (9) edge[bend right=70] (3)
+              (3) edge (10);
+    
+    \end{tikzpicture}
+    \end{wrapfigure}
+    \end{multicols}
+    
+    \vspace{4em}
+    \textbf{CFG - Semantics}\\
+    \begin{tikzpicture}[>=stealth',auto,node distance=1.5cm]
+    
+    \node[draw, circle] (1) {$1$};
+    \node[draw, circle, below of=1] (2) {$2$};
+    \node[draw, circle, below of=2] (3) {$3$};
+    \node[draw, circle, node distance=2cm, below left of=3] (4) {$4$};
+    \node[draw, circle, below of=4] (5) {$5$};
+    \node[draw, circle, node distance=2cm, below left of=5] (6) {$6$};
+    \node[draw, circle, below of=6] (7) {$7$};
+    \node[draw, circle, node distance=2cm, below right of=5] (8) {$8$};
+    \node[draw, circle, below of=8] (9) {$9$};
+    \node[draw, circle, node distance=2cm, xshift=5pt, below right of=3] (10) {$10$};
+
+
+    
+    \path[->] (1) edge node[right] {$y\leftarrow1$} (2)
+              (2) edge node[right] {$v\leftarrow x$} (3)
+              (3) edge node[right] {$y\neq z$} (4)
+              (4) edge node[right] {$t\leftarrow2y$} (5)
+              (5) edge node[right] {$t\leq z$} (6)
+              (5) edge node[right] {$\neg\, t\leq z$} (8)
+              (6) edge node[right] {$v\leftarrow v^2$} (7)
+              (7) edge[bend left=70] node[right] {$y\leftarrow2y$} (3)
+              (8) edge node[left] {$v\leftarrow vx$} (9)
+              (9) edge[bend right=40] node[right] {$y\leftarrow y+1$} (3)
+              (3) edge node[right] {$\neg\, y\neq z$} (10);
+    
+    \end{tikzpicture}
+
+
+
+
+\end{document}
