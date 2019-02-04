@@ -64,3 +64,13 @@ Un'espressione si dice Very Busy se in un certo punto di programma è stata sicu
 ## Reaching definitions
 
 Le reaching definitions ci dicono, per ogni punto di programma, le variabili che sono disponibili e in che punto di programma sono state definite. Per ogni punto quindi si ha un insieme di coppie. A seconda del cammino percorso le definizioni disponibili potrebbero essere diverse, per questo ad una variabile possono corrispondere più punti di programma, rendendo così l'analisi di tipo possible.
+
+## Copy propagation
+
+L'analisi di copy propagation ci dice, per ogni punto di programma, l'insieme di coppie di variabili che contengono lo stesso valore. È un'analisi di tipo forward e definite, che può essere utilizzata nelle ottimizzazione per evitare copie inutili. L'unica istruzione che genera una nuova coppia è `x <- y`, mentre ogni altra modifica di una di queste variabili uccide tutte le coppie in cui è presente.
+
+## Intervalli
+
+Questa analisi è solo semantica, in quanto ci dice cosa calcola un programma. Per ogni punto viene associato ad ogni variabile un intervallo che comprende i valori che questa può assumere. È perciò necessario definire nella semantica le operazioni tra intervalli per ogni possibile istruzione, incluse operazioni aritmetiche e di confronto.
+
+In alcuni casi però i cicli possono essere ripetuti molte volte, per cui si utilizza il widening: se dopo due iterazioni un estremo di un intervallo continua a crescere lo si approssima con l'infinito. Una volta raggiunto il punto fisso è possibile applicare il narrowing per restringere l'intervallo.
