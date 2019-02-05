@@ -17,7 +17,7 @@
 \usepackage[wide]{sidecap}  % Permette di mettere didascalie laterali a figure e tabelle
 \usepackage{subfig}    % Crea sottofigure o sottotabelle
 \usepackage[]{xcolor}  % Add colors
-\usepackage{multicol}
+\usepackage{enumitem}
 \usepackage{tikz}				% includo il pacchetto per disegnare la FSM
 \usetikzlibrary{ arrows,automata}
 \usepackage{listings}
@@ -46,6 +46,14 @@
 \begin{document}
     \maketitle
     
+    \section*{Introduzione}
+    L'analisi statica mira all'estrazione di proprietà sintattiche o semantiche valide \emph{per ogni esecuzione} di un dato programma P. Distinguiamo principalmente due tipi di analisi: \emph{distributive} ed \emph{non-distributive}. Le prime usualmente studiano \textbf{come} avanza il flusso di esecuzione, mentre le altre si concentrano su \textbf{cosa} viene calcolato dal programma.\\[0.5em]
+    Tali analisi usano come strumento principe il \emph{CFG} (\emph{Control Flow Graph}), ovvero un grafo che rappresenta il flusso di controllo di un programma o di una procedura. È rappresentato mediante un grafo orientato con possibili cicli, avente un unico punto di ingresso e un unico punto di uscita, i cui nodi sono \emph{basic block} mentre gli archi sono le possibili transizioni tra blocchi.\\
+    Un basic block è una sequenza di istruzioni del programma priva di costrutti di controllo (tutte le istruzioni che lo compongono sono eseguite sequenzialmente, senza salti o cicli). Per costruirlo quindi si crea un blocco ogni volta che c'è un salto.\\[3em]
+    
+    \textbf{QUALCOSA SULL'ASTRAZIONE}
+
+    \newpage    
     \textbf{Prima distinzione}:
     \begin{itemize}
         \item Forward
@@ -76,8 +84,17 @@
         \item Definite analysis: $\bigoplus = \bigcap$
     \end{itemize}
     
-    \section*{Available Expressions}
-    \textbf{Forward \& Definite}
+    \clearpage\section*{Available Expressions}
+    \textbf{Forward \& Definite}\\[1em]
+    Un espressione del tipo $x\leftarrow e$ si dice \emph{available} (disponibile) in un dato punto $P$ di programma se:
+    \begin{itemize}[noitemsep, topsep=0.3em]
+        \item È definita in un blocco $B$ precedente a $P$
+        \item $x$ non è ridefinita tra $B$ e $P$
+        \item Le variabili di $e$ non sono ridefinite tra $B$ e $P$
+    \end{itemize}
+    Per ottimizzare il codice si può sostituire il calcolo di un'espressione disponibile con la deferenziazione della variabile in cui è stata assegnata.\\[1em]
+    
+    \noindent\textbf{Proprietà dei basic blocks}
     \begin{align*}
         \mbox{AvailIn}(n) &=
         \begin{cases}
@@ -98,7 +115,7 @@
         \right\}
     \end{align*}
     
-    \textbf{Semantica}
+    \noindent\textbf{Semantica}
     \begin{align*}
         \mbox{Dominio: }& \mathbb{P}(\mbox{Ass})\\
         \llbracket ; \rrbracket^\#A &= A\\
@@ -123,8 +140,14 @@
     \end{align*}
     
     
-    \section*{Liveness}
-    \textbf{Backward \& Possible}
+    \clearpage\section*{Liveness}
+    \textbf{Backward \& Possible}\\[1em]
+    Una variabile è viva in ogni punto di programma tra la sua definizione e il suo ultimo uso. Per calcolarle partiamo dal fondo e saliamo fino ad un uso della variabile; questa variabile resta viva finchè non troviamo la sua definizione, sopra la quale risulta non viva. Se una avariabile è viva vuol dire che il suo valore può essere letto. È un'analisi di tipo possible, poichè è sufficiente che sia viva in un ramo per renderla viva in quel punto di programma.
+    
+    Questa analisi risulta utile per cercare codice morto, variabili non inizializzate o registri liberi.\\[1em]
+    
+    \noindent\textbf{Proprietà dei basic blocks}
+    
     \begin{align*}
     \mbox{LiveOut}(n) &=
     \begin{cases}
@@ -152,7 +175,7 @@
     \end{align*}
     
     
-    \section*{True Liveness}
+    \clearpage\section*{True Liveness}
     \textbf{Backward \& Possible}
     \begin{align*}
     \mbox{TLiveOut}(n) &=
@@ -189,7 +212,7 @@
     \end{align*}
 
 
-    \section*{Very Busy Expressions}
+    \clearpage\section*{Very Busy Expressions}
     \textbf{Backward \& Definite}
     \begin{align*}
     \mbox{\VB Out}(n) &=
@@ -241,8 +264,12 @@
     \end{align*}
 
 
-    \section*{Reaching Definitions}
-    \textbf{Forward \& Possible}
+    \clearpage\section*{Reaching Definitions}
+    \textbf{Forward \& Possible}\\[1em]
+    Le reaching definitions ci dicono, per ogni punto di programma, le variabili che sono disponibili e in che punto di programma sono state definite. Per ogni punto quindi si ha un insieme di coppie. A seconda del cammino percorso le definizioni disponibili potrebbero essere diverse, per questo ad una variabile possono corrispondere più punti di programma, rendendo così l'analisi di tipo possible.
+    \\[1em]
+    
+    \noindent\textbf{Proprietà dei basic blocks}
     \begin{align*}
         \mbox{\RD In}(n) &=
         \begin{cases}
@@ -267,11 +294,11 @@
         \llbracket M[e_1]\leftarrow e_2 \rrbracket^\#\RD &= \RD\\
         \llbracket x \leftarrow e \rrbracket^\#\RD &= (\RD\setminus \mbox{Def}(x)) \cup
         \left\{
-            (x, v) \;\big\vert\, K = (u, x\leftarrow e, v)
+            (x, u) \;\big\vert\, K = (u, x\leftarrow e, v)
         \right\}\\
         \llbracket x\leftarrow M[e] \rrbracket^\#\RD &= (\RD\setminus \mbox{Def}(x)) \cup
         \left\{
-        (x, v) \;\big\vert\, K = (u, x\leftarrow e, v)
+            (x, u) \;\big\vert\, K = (u, x\leftarrow e, v)
         \right\}\\[1em]
         \mbox{{\footnotesize where} Def}(x) &=
         \left\{
@@ -285,8 +312,10 @@
     \end{align*}
 
 
-    \section*{Copy Propagation}
-    \textbf{Forward \& Definite}
+    \clearpage\section*{Copy Propagation}
+    \textbf{Forward \& Definite}\\[1em]
+    L'analisi di copy propagation ci dice, per ogni punto di programma, l'insieme di coppie di variabili che contengono lo stesso valore. È un'analisi di tipo forward e definite, che può essere utilizzata nelle ottimizzazione per evitare copie inutili. L'unica istruzione che genera una nuova coppia è $x\leftarrow y$, mentre ogni altra modifica di una di queste variabili uccide tutte le coppie in cui è presente.\\[1em]
+    \noindent\textbf{Proprietà dei basic blocks}
     \begin{align*}
         \mbox{CopyIn}(n) &=
         \begin{cases}
@@ -322,8 +351,11 @@
     \end{align*}
     
     
-    \section*{Intervals}
-    \textbf{Non-Distributive, Forward \& Possible}
+    \clearpage\section*{Intervals}
+    \textbf{Non-Distributive, Forward \& Possible}\\[1em]
+    Questa analisi è solo semantica, in quanto ci dice cosa calcola un programma. Per ogni punto viene associato ad ogni variabile un intervallo che comprende i valori che questa può assumere. È perciò necessario definire nella semantica le operazioni tra intervalli per ogni possibile istruzione, incluse operazioni aritmetiche e di confronto.
+    
+    In alcuni casi però i cicli possono essere ripetuti molte volte, per cui si utilizza il \textbf{widening}: se dopo due iterazioni un estremo di un intervallo continua a crescere lo si approssima con l'infinito. Una volta raggiunto il punto fisso è possibile applicare il narrowing per restringere l'intervallo.\\[1em]
 
     \textbf{Semantica}
     \begin{align*}
@@ -332,22 +364,51 @@
     \llbracket \mbox{zero}(e) \rrbracket^\#I &= 
     \begin{cases}
         \bot & [0, 0] \not\sqsubseteq \llbracket e \rrbracket^\#I\\
-        I & otherwise
+        I' & otherwise
     \end{cases}\\
     \llbracket \mbox{non-zero}(e) \rrbracket^\#I &= 
     \begin{cases}
         \bot & [0, 0] = \llbracket e \rrbracket^\#I\\
-        I & otherwise
+        I' & otherwise
     \end{cases}\\
     \llbracket M[e_1]\leftarrow e_2 \rrbracket^\#I &= I\\
     \llbracket x \leftarrow e \rrbracket^\#I &= I\oplus \{x\mapsto\llbracket e \rrbracket^\#I\}\\
-    \llbracket x \leftarrow M[e] \rrbracket^\#I &= I\oplus \{x\mapsto\top\}
+    \llbracket x \leftarrow M[e] \rrbracket^\#I &= I\oplus \{x\mapsto\top\}\\
+    \mbox{\footnotesize where } I' &= (I \oplus I(x\mapsto I\{x\} \sqcap [-\infty,\; u]))\; \lor\\
+    & \hspace{1.25em} (I \oplus I(x\mapsto I\{x\} \sqcap [l,\; +\infty]))\;\; \mbox{\textit{According to} } \llbracket e \rrbracket^\#I
     \end{align*}
 
+
+    \clearpage\section*{Segni}
+    \textbf{Non-Distributive, Forward \& Possible}\\[1em]
+    Quella dei segni è un'analisi simile agli intervalli, ma semplificata, in cui le variabili possono assumere, nel dominio astratto, solo i valori positivo o negativo, con lo 0 incluso. Anche in questo caso dobbiamo definire le come le operazioni aritmetiche modificano il dominio.\\[1em]
+    
+    \textbf{Semantica}
+    \begin{align*}
+    \mbox{Dominio: }& \mathbb{S}=\{ \top, \mathbb{Z}_0^+, \mathbb{Z}^+, \mathbb{Z}_0^-, \mathbb{Z}^-, 0, \neq\!0, \bot \}\\
+    \llbracket ; \rrbracket^\#S &= S\\
+    \llbracket \mbox{zero}(e) \rrbracket^\#S &= 
+    \begin{cases}
+    \bot & [0, 0] \not\sqsubseteq \llbracket e \rrbracket^\#S\\
+    S' & otherwise
+    \end{cases}\\
+    \llbracket \mbox{non-zero}(e) \rrbracket^\#S &= 
+    \begin{cases}
+    \bot & [0, 0] = \llbracket e \rrbracket^\#S\\
+    S' & otherwise
+    \end{cases}\\
+    \llbracket M[e_1]\leftarrow e_2 \rrbracket^\#S &= S\\
+    \llbracket x \leftarrow e \rrbracket^\#S &= S\oplus \{x\mapsto\llbracket e \rrbracket^\#S\}\\
+    \llbracket x \leftarrow M[e] \rrbracket^\#S &= S\oplus \{x\mapsto\top\}\\
+    \mbox{\footnotesize where } S' &= \mbox{\textit{The sign evaluation of} } \llbracket e \rrbracket^\#S
+    \end{align*}
+
+
     \newpage
-    \section*{Esercizi}
+    \clearpage\section*{Esercizi}
     \subsection*{Available Expressions}
-    \begin{multicols}{2}
+    \begin{tabular}{cc}
+    \begin{minipage}{0.5\textwidth}
     \textbf{Codice}
     \begin{lstlisting}{}
         y = 1;
@@ -361,9 +422,11 @@
                 v = vx;
                 y = y+1;
     \end{lstlisting}
-    \columnbreak
+    %\columnbreak
+    \end{minipage}&
     
     \noindent
+    \begin{minipage}{0.5\textwidth}
     Ass $= \{y\leftarrow1,\;v\leftarrow x,\;t\leftarrow2y\}$\\[0.5em]
     \begin{tabular}{c | l | l}
         & Gen & Kill\\
@@ -379,13 +442,14 @@
         9  & $\emptyset$ & $t\leftarrow2y,\; y\leftarrow1$\\
         10 & $\emptyset$ & $\emptyset$\\
     \end{tabular}
-    \end{multicols}
-    
-    \begin{multicols}{2}
+    \end{minipage}
+    \end{tabular}
+
+    \begin{minipage}{0.5\textwidth}
     \textbf{CFG - MOP}\\
-    \begin{wrapfigure}{l}{0.5\textwidth}
-        \begin{tikzpicture}[>=stealth',auto,node distance=1.2cm]
-        
+    %\begin{wrapfigure}{l}{0.5\textwidth}
+        \begin{tikzpicture}[>=stealth',auto,node distance=1cm]
+        \small
         \node[label=right: $^0$] (0) {entry};
         \node[draw, below of=0, label=right: $^1$] (1) {$y\leftarrow1$};
         \node[draw, below of=1, label=right: $^2$] (2) {$v\leftarrow x$};
@@ -412,9 +476,11 @@
         (3) edge (10);
         
         \end{tikzpicture}
-    \end{wrapfigure}
-    \columnbreak
+    %\end{wrapfigure}
+    %\columnbreak
+    \end{minipage}
     
+    \begin{minipage}{0.5\textwidth}
     \begin{tabular}{c | l | l | l}
         AvailIn & $\emptyset$ & 1 & 2\\
         \hline
@@ -429,7 +495,8 @@
         9  & $T$ & $t\leftarrow2y,\; y\leftarrow1$ & $t\leftarrow2y$\\
         10 & $T$ & $v\leftarrow x,\; y\leftarrow1$ & $\emptyset$\\
     \end{tabular}
-    \end{multicols}
+    \end{minipage}
+
     
     \newpage
     \textbf{CFG - Semantics}\\
