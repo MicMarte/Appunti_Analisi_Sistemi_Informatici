@@ -100,7 +100,7 @@
     
     \textbf{Semantica}
     \begin{align*}
-        \mbox{Dominio: }& \mathbb{P}(\mbox{assign})\\
+        \mbox{Dominio: }& \mathbb{P}(\mbox{Ass})\\
         \llbracket ; \rrbracket^\#A &= A\\
         \llbracket \mbox{zero}(e) \rrbracket^\#A &= A\\
         \llbracket \mbox{non-zero}(e) \rrbracket^\#A &= A\\
@@ -363,40 +363,75 @@
     \end{lstlisting}
     \columnbreak
     
-    \textbf{CFG - MOP}\\
-    \begin{wrapfigure}{l}{0.5\textwidth}
-    \begin{tikzpicture}[>=stealth',auto,node distance=1.2cm]
-    
-    \node[label=right: $^0$] (0) {entry};
-    \node[draw, below of=0, label=right: $^1$] (1) {$y\leftarrow1$};
-    \node[draw, below of=1, label=right: $^2$] (2) {$v\leftarrow x$};
-    \node[draw, below of=2, label=left: $^3$] (3) {$y\neq x$};
-    \node[draw, below of=3, label=right: $^4$] (4) {$t\leftarrow2y$};
-    \node[draw, below of=4, label=right: $^5$] (5) {$t\leq z$};
-    \node[node distance = 2cm, draw, below left of=5, label=right: $^6$] (6) {$v\leftarrow v^2$};
-    \node[draw, below of=6, label=right: $^7$] (7) {$y\leftarrow2y$};
-    \node[node distance = 2cm, draw, below right of=5, label=right: $^8$] (8) {$v\leftarrow vx$};
-    \node[draw, below of=8, label=right: $^9$] (9) {$y\leftarrow y+1$};
-    \node[node distance = 3cm, right of=3, label=right: $^{10}$] (10) {exit};
-    
-    \path[->] (0) edge (1)
-              (1) edge (2)
-              (2) edge (3)
-              (3) edge (4)
-              (4) edge (5)
-              (5) edge (6)
-              (5) edge (8)
-              (6) edge (7)
-              (7) edge[bend left=65] (3)
-              (8) edge (9)
-              (9) edge[bend right=70] (3)
-              (3) edge (10);
-    
-    \end{tikzpicture}
-    \end{wrapfigure}
+    \noindent
+    Ass $= \{y\leftarrow1,\;v\leftarrow x,\;t\leftarrow2y\}$\\[0.5em]
+    \begin{tabular}{c | l | l}
+        & Gen & Kill\\
+        \hline
+        1  & $y\leftarrow1$ & $t\leftarrow2y$\\
+        2  & $v\leftarrow x$ & $\emptyset$\\
+        3  & $\emptyset$ & $\emptyset$\\
+        4  & $t\leftarrow2y$ & $\emptyset$\\
+        5  & $\emptyset$ & $\emptyset$\\
+        6  & $\emptyset$ & $v\leftarrow x$\\
+        7  & $\emptyset$ & $t\leftarrow2y,\; y\leftarrow1$\\
+        8  & $\emptyset$ & $v\leftarrow x$\\
+        9  & $\emptyset$ & $t\leftarrow2y,\; y\leftarrow1$\\
+        10 & $\emptyset$ & $\emptyset$\\
+    \end{tabular}
     \end{multicols}
     
-    \vspace{4em}
+    \begin{multicols}{2}
+    \textbf{CFG - MOP}\\
+    \begin{wrapfigure}{l}{0.5\textwidth}
+        \begin{tikzpicture}[>=stealth',auto,node distance=1.2cm]
+        
+        \node[label=right: $^0$] (0) {entry};
+        \node[draw, below of=0, label=right: $^1$] (1) {$y\leftarrow1$};
+        \node[draw, below of=1, label=right: $^2$] (2) {$v\leftarrow x$};
+        \node[draw, below of=2, label=left: $^3$] (3) {$y\neq x$};
+        \node[draw, below of=3, label=right: $^4$] (4) {$t\leftarrow2y$};
+        \node[draw, below of=4, label=right: $^5$] (5) {$t\leq z$};
+        \node[node distance = 2cm, draw, below left of=5, label=right: $^6$] (6) {$v\leftarrow v^2$};
+        \node[draw, below of=6, label=right: $^7$] (7) {$y\leftarrow2y$};
+        \node[node distance = 2cm, draw, below right of=5, label=right: $^8$] (8) {$v\leftarrow vx$};
+        \node[draw, below of=8, label=right: $^9$] (9) {$y\leftarrow y+1$};
+        \node[node distance = 3cm, right of=3, label=right: $^{10}$] (10) {exit};
+        
+        \path[->] (0) edge (1)
+        (1) edge (2)
+        (2) edge (3)
+        (3) edge (4)
+        (4) edge (5)
+        (5) edge (6)
+        (5) edge (8)
+        (6) edge (7)
+        (7) edge[bend left=65] (3)
+        (8) edge (9)
+        (9) edge[bend right=70] (3)
+        (3) edge (10);
+        
+        \end{tikzpicture}
+    \end{wrapfigure}
+    \columnbreak
+    
+    \begin{tabular}{c | l | l | l}
+        AvailIn & $\emptyset$ & 1 & 2\\
+        \hline
+        1  & $\emptyset$ & $\emptyset$ & $\emptyset$\\
+        2  & $T$ & $y\leftarrow1$ & $y\leftarrow1$\\
+        3  & $T$ & $v\leftarrow x,\; y\leftarrow1$ & $\emptyset$\\
+        4  & $T$ & $v\leftarrow x,\; y\leftarrow1$ & $\emptyset$\\
+        5  & $T$ & $t\leftarrow2y,\; v\leftarrow x, y\leftarrow1$ & $t\leftarrow2y$\\
+        6  & $T$ & $t\leftarrow2y,\; v\leftarrow x, y\leftarrow1$ & $t\leftarrow2y$\\
+        7  & $T$ & $t\leftarrow2y,\; y\leftarrow1$ & $t\leftarrow2y$\\
+        8  & $T$ & $t\leftarrow2y,\; v\leftarrow x, y\leftarrow1$ & $t\leftarrow2y$\\
+        9  & $T$ & $t\leftarrow2y,\; y\leftarrow1$ & $t\leftarrow2y$\\
+        10 & $T$ & $v\leftarrow x,\; y\leftarrow1$ & $\emptyset$\\
+    \end{tabular}
+    \end{multicols}
+    
+    \newpage
     \textbf{CFG - Semantics}\\
     \begin{tikzpicture}[>=stealth',auto,node distance=1.5cm]
     
@@ -426,7 +461,6 @@
               (3) edge node[right] {$\neg\, y\neq z$} (10);
     
     \end{tikzpicture}
-
 
 
 
