@@ -340,7 +340,7 @@
         \llbracket M[e_1]\leftarrow e_2 \rrbracket^\#C &= C\\
         \llbracket x \leftarrow e \rrbracket^\#C &= C\setminus \mbox{Copie}(x)\quad e\notin Var\\
         \llbracket x \leftarrow M[e] \rrbracket^\#C &= C\setminus \mbox{Copie}(x)\\
-        \llbracket x\leftarrow y \rrbracket^\#C &= (C\setminus \mbox{Copie}(x)) \cup
+        \llbracket x\leftarrow y \rrbracket^\#C &= (C\setminus \mbox{Copie}(x)) \cup (x\;y) \cup
         \left\{
             (x\; z) \;\big\vert\; (z\; y) \in C
         \right\}\\[1em]
@@ -364,19 +364,36 @@
     \llbracket \mbox{zero}(e) \rrbracket^\#I &= 
     \begin{cases}
         \bot & [0, 0] \not\sqsubseteq \llbracket e \rrbracket^\#I\\
-        I' & otherwise
+        I\sqcap\llbracket e \rrbracket^\#I & otherwise
     \end{cases}\\
     \llbracket \mbox{non-zero}(e) \rrbracket^\#I &= 
     \begin{cases}
         \bot & [0, 0] = \llbracket e \rrbracket^\#I\\
-        I' & otherwise
+        I\sqcap\llbracket e \rrbracket^\#I & otherwise
     \end{cases}\\
     \llbracket M[e_1]\leftarrow e_2 \rrbracket^\#I &= I\\
-    \llbracket x \leftarrow e \rrbracket^\#I &= I\oplus \{x\mapsto\llbracket e \rrbracket^\#I\}\\
-    \llbracket x \leftarrow M[e] \rrbracket^\#I &= I\oplus \{x\mapsto\top\}\\
-    \mbox{\footnotesize where } I' &= (I \oplus I(x\mapsto I\{x\} \sqcap [-\infty,\; u]))\; \lor\\
-    & \hspace{1.25em} (I \oplus I(x\mapsto I\{x\} \sqcap [l,\; +\infty]))\;\; \mbox{\textit{According to} } \llbracket e \rrbracket^\#I
+    \llbracket x \leftarrow e \rrbracket^\#I &= I[x\mapsto\llbracket e \rrbracket^\#I]\\
+    \llbracket x \leftarrow M[e] \rrbracket^\#I &= I[x\mapsto\top]
     \end{align*}
+%    \mbox{\footnotesize where } I' &= (I \oplus I(x\mapsto I\{x\} \sqcap [-\infty,\; u]))\; \lor\\
+%    & \hspace{1.25em} (I \oplus I(x\mapsto I\{x\} \sqcap [l,\; +\infty]))\;\; \mbox{\textit{According to} } \llbracket e \rrbracket^\#I    
+    
+    \textbf{Widening} ($\nabla$)
+    \begin{align*}
+        \bot\nabla I = I\,\nabla\bot = &I\\[0.5em]
+        (I_1 \nabla I_2)(x) = I_1(x)\nabla I_2(x) &\mbox{ \footnotesize where } [l_1,\;u_1]\nabla[l_2,\;u_2] = [l,\;u] \mbox{ \footnotesize such that}\\
+        l =
+        \begin{cases}
+            l_1 & \mbox{if } l_1 \leq l_2\\
+            -\infty & \mbox{otherwise}
+        \end{cases}
+        \quad &u =
+        \begin{cases}
+            u_1 & \mbox{if } u_1 \geq u_2\\
+            +\infty & \mbox{otherwise}
+        \end{cases}
+    \end{align*}
+
 
 
     \clearpage\section*{Segni}
@@ -495,10 +512,9 @@
         9  & $T$ & $t\leftarrow2y,\; y\leftarrow1$ & $t\leftarrow2y$\\
         10 & $T$ & $v\leftarrow x,\; y\leftarrow1$ & $\emptyset$\\
     \end{tabular}
-    \end{minipage}
+    \end{minipage}\\[2em]
 
-    
-    \newpage
+    \begin{minipage}{0.5\textwidth}
     \textbf{CFG - Semantics}\\
     \begin{tikzpicture}[>=stealth',auto,node distance=1.5cm]
     
@@ -528,6 +544,7 @@
               (3) edge node[right] {$\neg\, y\neq z$} (10);
     
     \end{tikzpicture}
+    \end{minipage}
 
 
 
