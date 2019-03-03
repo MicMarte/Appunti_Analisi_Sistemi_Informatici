@@ -1,0 +1,1094 @@
+\documentclass[a4paper,12pt,openany]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[italian]{babel}
+\usepackage{amsmath,amssymb}
+\usepackage{stmaryrd}
+\usepackage{mathptmx}  % Font
+\usepackage{relsize}   % Displaystyle for math symbols
+\usepackage[linktocpage=true,hyperfootnotes=false,colorlinks=true,linkcolor=orange]{hyperref}  % Link nell'indice
+\usepackage{microtype} % migliora l'uso di spazi e rientri
+\usepackage{bbding}    % New symbols for itemize
+\usepackage{setspace}  % Permette di personalizzare l'interlinea
+\usepackage{graphicx}  % Permette di includere figure
+\usepackage{wrapfig}
+\usepackage{booktabs}  % Creazione tabelle
+\usepackage{caption}   % Permette la personalizzazione delle didascalie e la loro aggiunta in tabelle
+\usepackage[wide]{sidecap}  % Permette di mettere didascalie laterali a figure e tabelle
+\usepackage{subfig}    % Crea sottofigure o sottotabelle
+\usepackage[]{xcolor}  % Add colors
+\usepackage{enumitem}
+\usepackage{tikz}				% includo il pacchetto per disegnare la FSM
+\usetikzlibrary{ arrows,automata}
+\usepackage{listings}
+
+\usepackage{calrsfs}
+\usepackage{galois}
+\usepackage{fancyhdr}
+
+\lstset{columns=fullflexible,
+    mathescape=true,
+    literate=
+        {=}{$\leftarrow{}$}{1}
+        {==}{$={}$}{1}
+        {!=}{$\neq$}{1}
+        {<=}{$\leq$}{1}
+        {>=}{$\geq$}{1}
+        {^2}{$^2$}{1},
+    morekeywords={if,then,else,return}
+}
+
+%\renewcommand\labelitemi{\footnotesize\SnowflakeChevron}
+
+\newcommand{\TL}{T\!L}
+\newcommand{\VB}{V\!B}
+\newcommand{\RD}{R\!D}
+
+%-----------------
+
+\title{Analisi dei sistemi informatici}
+\author{
+  Zampieri Amedeo\\
+  Martini Michele\\
+  Contro Filippo\\
+  Crosara Marco\\
+}
+\date{Gennaio 2019}
+
+\DeclareMathAlphabet{\pazocal}{OMS}{zplm}{m}{n}
+\newcommand{\Pp}{\mathcal{P}}
+\newcommand{\Mmoore}{\mathcal{M}}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+
+\newenvironment{proof}[1][Proof]{\begin{trivlist}
+\item[\hskip \labelsep {\bfseries #1}]}{\end{trivlist}}
+\newenvironment{definition}[1][Definizione]{\begin{trivlist}
+\item[\hskip \labelsep {\bfseries #1}]}{\end{trivlist}}
+\newenvironment{example}[1][Esempio]{\begin{trivlist}
+\item[\hskip \labelsep {\bfseries #1}]}{\end{trivlist}}
+\newenvironment{remark}[1][Remark]{\begin{trivlist}
+\item[\hskip \labelsep {\bfseries #1}]}{\end{trivlist}}
+
+\newcommand{\qed}{\nobreak \ifvmode \relax \else
+      \ifdim\lastskip<1.5em \hskip-\lastskip
+      \hskip1.5em plus0em minus0.5em \fi \nobreak
+      \vrule height0.75em width0.5em depth0.25em\fi}
+
+\begin{document}
+
+%Prima pagina
+\maketitle
+\newpage
+
+%Indice
+\tableofcontents
+\newpage
+
+\section{Interpretazione astratta}
+
+    \begin{definition}[Dominio astratto]: Un dominio astratto è un insieme di \textit{oggetti astratti} e delle operazioni
+            astratte su tali oggetti (operazioni che approssimano quelle concrete).
+    \end{definition}
+    
+    \begin{definition}[Astrazione]: Una funzione di astrazione $\alpha$ mappa \textit{}{ogni} oggetto concreto \textit{o}
+            in una sua approssimazione rappresentata da un oggetto astratto $\alpha(\textit{o})$
+    \end{definition}
+    
+    \begin{definition}[Comparazione di astrazioni]: Una maggiore perdita di informazioni significa che il grado di
+            astrazione è maggiore. Non è sempre possibile paragonare le astrazioni, poiché possono
+            perdere informazione in maniera diversa.
+    \end{definition}
+    
+    \begin{definition}[Concretizzazione]: Una funzione di concretizzazione $\gamma$ mappa oggetti astratti \textit{\={o}} in oggetti concreti $\gamma(\textit{\={o}})$ che essi rappresentano.
+    \end{definition}
+    
+    \begin{definition}[Collecting semantics]: È una semantica che colleziona tutti gli stati che possono presentarsi in una traccia. Non esiste una semantica universale poiché l'informazione da mantenere dipende dal problema specifico.
+    \end{definition}
+    
+    Quando si analizza un programma è utile studiare le tracce di esecuzione; una traccia di esecuzione è una sequenza di stati raggiunti da una singola esecuzione in ogni punto di programma. Analizzare le tracce è un'operazione molto onerosa, che richiede il salvataggio in memoria di tutti gli stati raggiunti per ogni traccia. Oltre agli stati vanno memorizzati anche i collegamenti tra essi, in modo che ogni traccia abbia la propria catena di stati. Per semplificare ciò si può usare un'approssimazione: la Collecting Semantincs. In sostanza ad ogni punto di programma è associato un bucket che contiene tutti gli stati che sono stati raggiunti da una qualsiasi delle tracce in quel punto. Questa approssimazione però perde il collegamento tra stati, rendendo impossibile ricostruire la catena degli stati di una singola traccia. Questo potrebbe quindi includere tracce che non possono verificarsi, ma che sono ammesse dagli stati raggiungibili. (vedi figura).
+    
+    Un'ulteriore approssimazione è costituita dagli intervalli: per ogni punto di programma anziché memorizzare i singoli stati si memorizza solo l'intervallo più piccolo nel quale sono tutti racchiusi.
+    
+    \begin{definition}[Least upper bound (\textbf{lub})]: Un \textit{lub} in un poset $\textbf{X}$ è un $\textbf{x}$ tale che:
+            \begin{itemize}
+                \item $\textbf{x}$ è un \textit{upper bound} di $\textbf{X}$;
+                \item $\textbf{x}$ è il minore degli \textit{upper bound} di $\textbf{X}$;
+            \end{itemize}
+            Quando esiste, un \emph{lub} è unico. Non è detto che un \emph{lub} debba appartenere al
+            poset.
+    \end{definition}
+    
+    \begin{definition}[Greatest lower bound (\textbf{glb})]: È il  duale di \emph{lub}.
+    \end{definition}
+    
+    \begin{definition}[Join semireticolo]: Un \emph{join semireticolo} $\langle P, \leq, \sqcup \rangle$ è un poset
+            $\langle P, \leq \rangle$ tale che dati due elementi $\mathbf{x}, \mathbf{y} \in P$ abbiano
+            un \textbf{lub} $\mathbf{x} \sqcup \mathbf{y}$.
+    \end{definition}
+    
+    \begin{definition}[Meet semireticolo]: è il duale del \textit{join semireticolo}, quindi è definito come 
+        $\langle P, \leq, \sqcap \rangle$.
+    \end{definition}
+    
+    \begin{definition}[Reticolo]: Un reticolo è sia un join che un meet semireticolo. Dispone quindi di \textbf{lub}
+            e di \textbf{glb}. È definito quindi come $\langle P, \leq, \sqcup, \sqcap \rangle$.
+    \end{definition}
+    
+    \begin{definition}[Sottoreticolo]: Sia $\langle L, \leq, \sqcup, \sqcap \rangle$ un reticolo. $S \subseteq L$ è un 
+        sottoreticolo di L \textbf{se e solo se} 
+        $$\forall x,y \in S : x \sqcup y \in S \land x \sqcap y \in S$$
+    \end{definition}
+    
+    \begin{definition}[Reticolo completo]: Un reticolo $\langle L, \leq, \sqcup, \sqcap \rangle$ si dice completo se
+            ogni sottoinsieme $X \subseteq L$ dispone di \emph{lub} e di \emph{glb}. Un reticolo completo
+            ha un elemento \textbf{bottom} $\bot = \sqcup \emptyset$ e un elemento \textbf{top} 
+            $\top = \sqcup P$.
+    \end{definition}
+    
+    \begin{definition}[Punti fissi]: Sia $f \in L \to L $ un operatore sul poset
+            $\langle L, \sqsubseteq \rangle$
+        \begin{itemize}
+            \item \textbf{fixpoints} : fp($f$) $\overset{\mathrm{def}}{=} \{x \in L | f(x) = x\}$
+            \item \textbf{pre-fixpoints} : prefp($f$) $\overset{\mathrm{def}}{=} \{x \in L | f(x) 
+                \sqsubseteq x\}$
+            \item \textbf{post-fixpoints} : postfp($f$) $\overset{\mathrm{def}}{=} \{x \in L | f(x) 
+                \sqsupseteq x\}$
+        \end{itemize}
+            Il \emph{least fixpoint} (\textbf{lfp}) di $f$ è il minimo dei suoi fixpoint. Segue dualmente il 
+            \emph{greatest fixpoint}(\textbf{gfp}).
+    \end{definition}
+    
+    L' \emph{astrazione} è il processo con il quale si rimpiazza qualcosa di concreto con una descrizione di
+    \emph{alcune} delle sue proprietà. Queste proprietà sono descritte in maniera precisa, mentre quelle
+    che vengono tralasciate generano l'imprecisione dell'astrazione.
+    \newline
+    Sia $\Pp(\Sigma)$ l'insieme delle proprietà di $\Sigma$. Sia $A \subseteq\Pp(\Sigma)$ un'astrazione:
+    gli elementi in A sono descritti precisamente dall'astrazione (senza perdita di precisione,
+    mentre gli elementi che non appartengono ad A devono essere rappresentati attraverso oggetti di A,
+    introducendo così perdita di precisione.
+    
+    \begin{definition}[Reticolo delle proprietà]: Sia $\Pp(\Sigma)$ l'insieme delle proprietà degli oggetti
+        in $\Sigma$ un reticolo completo e distributivo 
+        $\langle \Pp(\Sigma), \subseteq, \emptyset, \cup, \cap, \neg \rangle$:
+        \begin{itemize}
+            \item Una proprietà P è un sottoinsieme di $\Sigma$;
+            \item $\subseteq$ è l'implicazione logica fra proprietà;
+            \item $\Sigma$ è vero;
+            \item $\emptyset$ è falso;
+            \item $\cup$ è la disgiunzione, ovvero, dati $P,Q \subseteq \Pp(\Sigma)$,
+                gli elementi di $P$ o di $Q$ appartengono a $P \cup Q$);
+            \item $\cap$ è la congiunzione, ovvero, dati $P,Q \subseteq \Pp(\Sigma)$,
+                gli elementi di $P$ e di $Q$ appartengono a $P \cap Q$);
+            \item $\neg$ è la negazione, ovvero, dato $P \subseteq \Pp(\Sigma)$,
+                gli elementi che stanno in $\Sigma \setminus P$;
+        \end{itemize}
+    \end{definition}
+    
+    Quando si approssima una proprietà concreta $P$ con una astratta $\overline{P}$ ci sono essenzialmente
+    due casi:
+    \begin{itemize}
+        \item Approssimazione per difetto: $\overline{P} \subseteq P$. La proprietà astratta è più vincolante
+            di quella concreta. $$x \in \overline{P} \to x \in P$$
+        \item Approssimazione per eccesso: $\overline{P} \supseteq P$. La proprietà astratta è meno vincolante
+        di quella concreta, aggiungendo così rumore. A volte analizzare un insieme più grande permette
+        di avere una miglior rappresentazione degli elementi grazie al fatto che i vincoli sono rilassati.
+        $$x \notin \overline{P} \to x \notin P$$
+    \end{itemize}
+    Essendo casi duali, basta studiarne uno solo. Inoltre $\overline{P}$ deve essere \textbf{decidibile}.
+    
+    \begin{definition}[Miglior astrazione]: La miglior approssimazione di una proprietà concreta è il \emph{glb}
+            di tutti gli elementi astratti che godono di tale proprietà:
+            $$\overline{P} = \bigcap\{\overline{P}' \in A | P \in \overline{P}' \}$$
+    \end{definition}
+    
+    \begin{definition}[Galois connections]: Dati due poset ($A, \leq_A$) e ($C, \leq_C$), una 
+        \emph{connessione di Galois} fra i due poset consiste di due funzioni \emph{monotone}:
+        \begin{itemize}
+            \item Astrazione: $\alpha : C \to A$ su ($A, \leq_A$)
+            \item Concretizzazione: $\gamma : A \to C$ su ($C, \leq_C$)
+        \end{itemize}
+            tali che $\forall a \in A.\alpha(c) \leq_A a \Leftrightarrow \forall c \in C.c \leq_C \gamma(a)$.
+            Le connessioni di Galois servono per formalizzare la relazione fra concreto ed astratto, garantendo
+            l'esistenza della migliore approssimazione. Una GC viene rappresentata come
+            $$(C, \leq_C)\galois{\alpha}{\gamma}(A, \leq_A)$$
+            Data $\alpha$ o $\gamma$ la corrispondente GC è determinata univocamente.
+    \end{definition}
+    
+    \begin{definition}[Galois insertions]: Una inserzione di Galois di $A$ su $B$ è una GC nella quale l'operatore di
+        chiusura è l'identità su $A$.
+        $$\forall a \in A.\alpha\gamma(a) \leq_A a \And \forall c \in C.c \leq_C \gamma\alpha(c)$$
+        
+    \end{definition}
+    
+    \begin{definition}[Upper closure operators] : Una funzione $\rho P \to P$ su un poset 
+        $\langle P, \leq_P \rangle$ è detta \textbf{uco} se:
+        \begin{itemize}
+            \item È estensiva (aggiunge rumore): $\forall x \in P.x \leq_A \rho(x)$
+            \item È monotona
+            \item È idempotente (il rumore viene aggiunto tutto in una volta e poi non ne viene più aggiunto):
+                $\forall x \in P.\rho(x) = \rho\rho(x)$
+        \end{itemize}
+        Nelle \emph{GC} e nelle \emph{GI} $\gamma\alpha$ sono \emph{uco}.
+    \end{definition}
+    
+    \begin{definition}[Moore families] : Sia L un reticolo completo. $X \subseteq L$ è una \emph{Moore family}
+        di L se $X = \Mmoore(X) \overset{\mathrm{def}}{=} \{\bigwedge S | S \subseteq X\}$, dove 
+        $\bigwedge \emptyset = \top \in \Mmoore(X)$. Essere una Moore family garantisce l'esistenza della
+        miglior approssimazione.
+    \end{definition}
+    
+\section{Reticolo delle astrazioni}
+Consideriamo il reticolo completo $\langle C, \leq \land, \lor , \top, \bot \rangle$, $A_i \in uco(C)$:
+\newline
+Il reticolo delle astrazioni è il reticolo degli \emph{uco} $A \equiv \rho(C)$
+$$\langle uco(C), \sqsubseteq, \sqcap, \sqcup, \lambda x.\top, \lambda x.x \rangle$$
+I domini astratti possono essere comparati in base al loro grado di precisione: un'astrazione $A_1$ è più
+precisa di un'astrazione $A_2$ se la concretizzazione di $A_1$ contiene quella di $A_2$ poiché ogni 
+oggetto di $A_1$ è approssimato in qualcosa di "più piccolo" rispetto agli oggetti di $A_2$.
+\newline
+I domini astratti possono essere modificati dai \emph{glb}, poiché il glb di domini astratti è il più
+piccolo dominio astratto contenente l'unione delle concretizzazioni.
+\newline
+I domini astratti possono essere combinati tramite \emph{lub}, poiché il lub di domini astratti è 
+l'intersezione delle concretizzazioni dei domini astratti.
+\newline
+L'astrazione più imprecisa (o astratta) porta tutto a $\top$, mentre la più precisa astrae tutto a sé stesso,
+diventando la funzione identità (il dominio astratto $A$ più preciso è infatti quello che coincide con il
+rispettivo $C$).
+
+\subsection{Soundness/Correctness}
+\begin{definition}[Correctness]
+    Consideriamo $C \galoiS{\alpha}{\gamma} A$, una funzione concreta $ f : C \to C$ e una funzione astratta
+    $f^\sharp : A \to A$. Si dice che $f^\sharp$ sia un'approssimazione \emph{sound/correct} di $f$ in $A$ se:
+    $$\forall c \in C: \alpha(f(c)) \leq_A f^\sharp(\alpha(c)) 
+    \equiv 
+    \forall a \in A: f(\gamma(a)) \leq_C \gamma(f^\sharp(a))$$
+\end{definition}
+
+Dalla definizione segue che la \emph{bca} (best correct approximation) di $f : C \to C$ sia 
+$\alpha \circ f \circ \gamma : A \to A$, ma dato che questa approssimazione compie computazioni concrete
+è del tutto inutile ai fini della semantica.
+
+\subsection{Completeness}
+Per quanto riguarda la \emph{completeness} bisogna considerare due casi:
+\begin{itemize}
+    \item \textbf{Backward}: considera la completezza sull'astrazione dell'output delle operazioni
+    \item \textbf{Forward}: considera  la completezza sull'astrazione dell'input delle operazioni
+\end{itemize}
+
+\subsubsection{Backward completeness}
+In questo caso intendiamo che non vi è perdita di precisione in caso di approssimazione dell'input.
+In pratica anche se l'input viene approssimato si è ancora in grado di calcolare precisamente la proprietà
+astratta (il rumore in input non disturba la semantica della computazione).
+\newline
+Un esempio di \emph{incompletezza backward} è sul dominio dei segni: se si guardano solo i segni degli
+input non possiamo sapere il segno di somma fra $\mathbb{Z}^-$ e $\mathbb{Z}^+$, andando così a $\top$. Allo stesso tempo
+però questo dominio è \emph{forward complete} poiché astraendo sull'output otteniamo sempre lo stesso 
+risultato che non facendolo. In pratica non c'è modo di avere un output più preciso.
+
+\subsubsection{Forward completeness}
+In questo caso non vi è perdita di precisione approssimando l'output dell' astrazione, ovvero, se si 
+approssima l'output, la computazione è ancora precisa.
+\newline
+Un esempio di \emph{incompletezza forward} è sull'espressione non deterministica $e_1 \square e_2$ e la 
+propagazione delle costanti. Infatti non sapendo quale operazione verrà eseguita otterremo $\top$. Un modo per
+evitare il problema sarebbe mettere tutte le possibilità nel risultato. Questo è anche un esempio di 
+completezza \emph{backward} poiché non c'è modo di cambiare l'input per ottenere una computazione più precisa.
+
+\subsection{Accelerazione della convergenza}
+In certi casi la convergenza non è assicurata, o magari è raggiungibile in un numero infinito di passi.
+Vorremmo quindi evitare entrambi i casi, poiché vorremmo sempre convergere e possibilmente in fretta
+(altrimenti lo strumento è inutile per applicazioni pratiche). Si introduce quindi in \textbf{widening},
+una tecnica che permette l'accelerazione della convergenza.
+\begin{definition}[Widening]
+    Un widening $\nabla \in P \times P \to P$ su un poset $\langle P, \sqsubseteq \rangle$ soddisfa:
+    \begin{itemize}
+        \item $\forall x,y \in P : x \sqsubseteq (x \nabla y) \land y \sqsubseteq (x \nabla y)$
+        \item per ogni catena crescente $x^0 \sqsubseteq x^1 \sqsubseteq \dots$ la catena crescente
+            ottenuta come 
+            $y^0 \overset{\mathrm{def}}{=} x^0, \dots, y^{n+1} 
+            \overset{\mathrm{def}}{=} y^n \nabla x^{n+1}, \dots$
+            \textbf{non} è \textbf{strettamente crescente}.
+    \end{itemize}
+\end{definition}
+Sullo stesso dominio possono essere definiti diversi \emph{widening}. Con questo operatore raggiungiamo dei 
+\emph{post punti fissi}. Vorremmo quindi trovare un modo per ottenere dei risultati più raffinati, in quanto
+non sappiamo quanto impreciso sia il post punto fisso raggiunto ($F^\nabla$).
+\begin{definition}[Narrowing]
+    Un narrowing $\triangle \in P \times P \to P$ sul poset $\langle P, \sqsubseteq \rangle$ è un'operazione
+    tale che:
+    \begin{itemize}
+        \item $\forall x,y \in P : y \sqsubseteq x \implies y \sqsubseteq x \triangle y \sqsubseteq x$
+            ($ x \triangle y$ in quel punto ci garantisce di non scendere al di sotto di un punto fisso)
+        \item per ogni catena decrescente $x^0 \sqsupseteq x^1 \sqsupseteq \dots$ la catena decrescente
+            ottenuta come 
+            $y^0 \overset{\mathrm{def}}{=} x^0, \dots, y^{n+1} 
+            \overset{\mathrm{def}}{=} y^n \nabla x^{n+1}, \dots$
+            \textbf{non} è \textbf{strettamente decrescente}.
+    \end{itemize}
+\end{definition}
+
+%    ___    _   __     ______________  ___________________ 
+%   /   |  / | / /    / ___/_  __/   |/_  __/  _/ ____/   |
+%  / /| | /  |/ /     \__ \ / / / /| | / /  / // /   / /| |
+% / ___ |/ /|  /     ___/ // / / ___ |/ / _/ // /___/ ___ |
+%/_/  |_/_/ |_(_)   /____//_/ /_/  |_/_/ /___/\____/_/  |_|
+
+\newpage
+\section{Analisi Statica}
+
+L'analisi statica mira all'estrazione di proprietà sintattiche o semantiche valide \emph{per ogni esecuzione} di un dato programma P.\\
+Dal \emph{teoreme di Rice} sappiamo però che le uniche proprietà studiabili in maniera precisa sono quelle
+banali. Nello specifico si parla di due tipi di analisi:
+\begin{itemize}
+	\item Control flow analysis
+	\item Data flow analysis (distributive/non-distributive)
+\end{itemize}Distinguiamo principalmente due tipi di analisi: \emph{distributive} ed \emph{non-distributive}. Le prime usualmente studiano \textbf{come} avanza il flusso di esecuzione, mentre le altre si concentrano su \textbf{cosa} viene calcolato dal programma.\\
+Tali analisi usano come strumento principe il \emph{CFG} (\emph{Control Flow Graph}), ovvero un grafo che rappresenta il flusso di controllo di un programma o di una procedura. È rappresentato mediante un grafo orientato con possibili cicli, avente un unico punto di ingresso e un unico punto di uscita, i cui nodi sono \emph{basic block} mentre gli archi sono le possibili transizioni tra blocchi.\\
+Un basic block è una sequenza di istruzioni del programma priva di costrutti di controllo (tutte le istruzioni che lo compongono sono eseguite sequenzialmente, senza salti o cicli). Per costruirlo quindi si crea un blocco ogni volta che c'è un salto. Tali concetti saranno spiegati meglio in seguito.
+
+\subsection{Linguaggio}
+Di seguito il linguaggio su cui verrà basato il resto:
+\begin{center}
+	\begin{tabular}{l l}
+		Variabili: &  $x$ \\
+		Espressioni aritmetiche: & $e$ \\
+		Assegnamenti: & $x \gets e$ \\
+		Lettura memoria: & $x \gets M[e]$ \\
+		Scrittura memoria: & $M[e_1] \gets e_2$ \\
+		Condizioni: & if (e) $S_1$ else $S_2$ \\
+		Salto incondizionato: & goto L\\
+	\end{tabular}
+\end{center}
+
+\subsection{Control Flow Graphs (CFG)}
+
+\begin{quotation}\small
+\textit{Un CFG, control flow graph, è un grafo che rappresenta il flusso di controllo di un programma o di una procedura. È rappresentato mediante un grafo orientato con possibili cicli, avente un punto di ingresso e un punto di uscita, i cui nodi sono basic block mentre gli archi sono le possibili transizioni tra blocchi. }
+\end{quotation}
+
+I \emph{CFG} sono un modo utile per rappresentare il flusso del codice sotto forma di grafi (\emph{con 
+radice}):
+\begin{itemize}
+    \item i \textbf{vertici} corrispondono ai program points
+    \item gli \textbf{archi} corrispondono ai passi di computazione etichettati con la corrispondente
+        azione:
+        \begin{center}
+        	\begin{tabular}{l l}
+        		Test: & $NonZero(e)$ or $Zero(e)$ \\
+        		Assegnamenti: & $x \gets e$ \\
+        		Lettura memoria: & $x \gets M[e]$ \\
+        		Scrittura memoria: & $M[e_1] \gets e_2$ \\
+        		Statement vuoto: & $;$ \\
+        	\end{tabular}
+        \end{center}
+\end{itemize}
+Ogni statement condizionale ha due archi corrispondenti: uno etichettato con \emph{NonZero(e)} che corrisponde
+alla condizione vera, l'altro etichettato con \emph{Zero(e)}.
+\newline
+Le computazioni vengono eseguite quando il corrispondente arco viene attraversato, modificando così lo stato
+del programma. Una computazione può quindi essere definita come un percorso fra due nodi.
+
+\begin{definition}[Basic block]
+    I \emph{basic blocks}, che vanno a comporre i nodi del nostro \emph{CFG}, sono sequenze massime di 
+    statements con un singolo punto di entrata e un singolo punto di uscita. Un esempio semplice di basic 
+    block può essere dividere tutte le singole istruzioni del codice. Un modo migliore invece per costruirli è
+    l'identificazione dei \emph{leader}. Per determinare i \emph{leader}  si procede come segue:
+    \begin{itemize}
+        \item Il primo statement in una sequenza è un leader
+        \item Qualsiasi statement s che sia target di un branch o un jump è un leader
+        \item Qualsiasi statement che segua un branch o un return è un leader.
+    \end{itemize}
+    Per ogni leader il suo corrispondente basic block comprende tutto il codice dal leader (compreso) al 
+    successivo leader (escluso).
+    I basic block sono comodi per l'ottimizzazione locale del codice, l'eliminazione della ridondanza e 
+    l'allocazione dei registri. Si prestano inoltre bene alla rappresentazione delle astrazioni su un
+    linguaggio.
+\end{definition}
+
+Per ogni nodo \emph{n} del CFG si ha:
+\begin{itemize}
+    \item $Pred(n)$ insieme dei predecessori di $n$;
+    \item $Succ(n)$ insieme dei successori di $n$;
+    \item un \emph{branch node} è un nodo con più di un successore;
+    \item un \emph{join node} è un nodo che ha più di un predecessore;
+\end{itemize}
+
+\begin{definition}[Extended Basic Block (EBB)]
+    Un \emph{EBB} è un insieme massimale di nodi in un CFG che \emph{non} contengono altri \emph{join node} al
+    di fuori dell'entry node. Sono utilizzati per motivi di ottimizzazione.
+\end{definition}
+
+\begin{definition}[Natural Loop]
+    Un loop è una collezione di nodi in un CFG tale che:
+    \begin{itemize}
+        \item Tutti i nodi nella collezione sono fortemente connessi;
+        \item La collezione di nodi ha un'unica entry che permette l'accesso al loop;
+    \end{itemize}
+    Sono utilizzati per le ottimizzazioni. Una proprietà di cui godono è la seguente: a meno che due loop non
+    abbiano la stessa entry sono o disgiunti o interamente uno contenuto nell'altro.
+\end{definition}
+
+\begin{definition}[Inner Loop]
+    Un \emph{inner loop} è un loop che non contiene altri loop.
+\end{definition}
+
+\begin{definition}[Relazione di Dominance]
+    Un nodo $d$ in un CFG \emph{domina} un nodo $n$ se \textbf{ogni} percorso dall'entry node del CFG che 
+    passa da $n$ passa anche per $d$. Ogni nodo $n$ ha un unico dominatore immediato, che è l'ultimo suo
+    dominatore in ogni percorso possibile dal nodo entry.
+\end{definition}
+
+\section{Analisi sui CFG}
+L'analisi si basa sul CFG generato dal relativo codice. Si dirama in tre differenti tipi:
+\begin{itemize}
+	\item \textbf{Locali (livello blocco)}: sono eseguite all'interno di \emph{singoli} basic block;
+	\item \textbf{Intra-procedurali}: considerano il flusso di informazioni nel singolo CFG (della procedura);
+	\item \textbf{Inter-procedurali}: considerano il flusso di informazioni tra le procedure.
+\end{itemize}
+Le \emph{data-flow analyses} si basano sulla caratterizzazione di \emph{come} l'informazione venga trasformata
+\emph{all'interno} di un blocco, ottenendo una soluzione di una equazione di punto fisso definita per ogni
+blocco. Questa equazione viene (spesso) ottenuta così:
+\begin{itemize}
+    \item Definizione dell'informazione in \emph{ingresso} al blocco come \emph{unione} dell' informazione
+        in uscita dei blocchi precedenti;
+    \item Definizione dell'informazione in \emph{uscita} dal blocco come informazione in ingresso 
+        \emph{trasformata} dalle operazioni eseguite nel blocco;
+    \item Combinazione delle precedenti definizioni in un'equazione di punto fisso;
+\end{itemize}
+
+\subsection{Schema delle analisi}
+
+    \textbf{Prima distinzione}:
+    \begin{itemize}
+        \item \textbf{Forward}: in questo tipo di analisi il risultato è calcolato a partire dagli output dei blocchi precedenti. Il termine \emph{forward} infatti ci suggerisce che il flusso vada dall'inizio alla fine del CFG.
+        \begin{align*}
+            \mbox{FAin}(n) = 
+            \begin{cases}
+                \emptyset & n=entry\\
+                \bigoplus\limits_{m\in \mbox{Pred}(n)} \mbox{FAout}(m) & \mbox{otherwise}
+            \end{cases}&\\[1em]
+            \mbox{FAout}(m) = \tau(\mbox{FAin}(m))&\\
+            \tau(\mbox{FAin}(m)) = \mbox{gen}(m) \cup (\mbox{FAout}(m) &\setminus \mbox{kill}(m))
+        \end{align*}
+        \item \textbf{Backward}: in questo caso il flusso va dalla fine all'inizio, risalendo il CFG. Infatti l'informazione è ottenuta guardando gli input dei blocchi successivi a quello considerato.
+        \begin{align*}
+            \mbox{BAout}(n) =
+            \begin{cases}
+                \emptyset & n=exit\\
+                \bigoplus\limits_{m\in \mbox{Succ}(n)} \mbox{BAin}(m) & \mbox{otherwise}
+            \end{cases}&\\[1em]
+            \mbox{BAin}(m) = \tau(\mbox{BAout}(m))&\\
+            \tau(\mbox{BAout}(m)) = \mbox{gen}(m) \cup (\mbox{BAin}(m) &\setminus \mbox{kill}(m))
+        \end{align*}
+    \end{itemize}
+
+    \textbf{Seconda distinzione}:
+    \begin{itemize}
+        \item \textbf{Possible analysis}: Un'analisi possible definisce che una certa proprietà \emph{potrebbe} valere in un certo punto di programma. Di questo tipo di analisi bisogna prendere l'insieme complementare, poiché non rispetta la \emph{soundness}.\\
+        \begin{align*}
+            \bigoplus = \bigcup \;\;\;\;\text{(Elemento Neutro: $\emptyset$)}
+        \end{align*}
+        \item \textbf{Definite analysis}: Un'analisi definite ci garantisce (\emph{soundness}) che una certa proprietà valga in un blocco. 
+        \begin{align*}
+            \bigoplus = \bigcap \;\;\;\;\text{(Elemento Neutro: $\top$)}
+        \end{align*}
+    \end{itemize}
+
+\newpage
+
+\section{Formal Framework}
+Bisogna definire e formalizzare l'informazione \emph{astratta} necessaria per l'analisi. Bisogna inoltre
+definire un \emph{abstract edge effect} (funzione di trasferimento) monotona su questo nuovo dominio astratto.
+Cerchiamo la soluzione \textbf{MOP} (\emph{merge over all paths} che permette di ottenere una trasformazione
+\emph{sound} del programma. Nel caso in cui l'abstract edge effect sia \emph{distributivo} ciò coincide con
+la soluzione \emph{minima} del sistema di disuguaglianze nel quale le incognite sono le informazioni astratte
+in ogni punto di programma.
+\newline
+La terminazione è assicurata dalla monotonicità dellafunzione di trasferimento e da un reticolo ACC. La
+soundness invece segue per costruzione per punto fisso. Inoltre, per quanto riguarda la precisione, con
+questo metodo gli abstract edge effects tengono in considerazione anche percorsi che nell' esecuzione 
+sarebbero invece impercorribili. Ciò quindi implica che tutti i percorsi possibili sono valutati (sound) e che
+ne vengono valutati alcuni in più (aggiunta di rumore).
+
+\section{Tre tipi di soluzioni: MFP, MOP e Ideale}
+Nella \emph{data-flow analysis} si possono avere tre tipi di soluzioni che sono appunto \emph{MFP}, \emph{MOP}
+e \emph{Ideale}. In alcuni casi MOP e MFP concidono, ovvero quando le funzioni di trasferimento sono 
+\emph{distributive}.Un'ulteriore condizione sarebbe che \emph{ogni} punto di programma deve essere 
+raggiungibile dalla entry, ma nel caso sia violata tale condizione basta rimuovere il codice morto (possibile
+in quanto \emph{non} cambia la semantica del programma).
+
+\begin{definition}[MFP (maximum fixed point)]: 
+    Nel caso forward è l'insieme delle soluzioni delle equazioni degli ingressi in tutti i blocchi. È un'
+    approssimazione della \emph{MOP} (coincidono solo se la funzione di trasferimento è distributiva).
+    È comunque un metodo \textbf{safe} di calcolo in quanto tiene conto di tutte le possibili varianti
+    del concreto, ed in più aggiunge rumore.
+\end{definition}
+
+\begin{definition}[MOP (merge over all paths)]:
+    È una soluzione migliore della \emph{MFP} che prende in considerazione tutti i percorsi percorribili
+    \textbf{sul CFG} e calcola la soluzione prendendo in considerazione solo questi. Purtoppo però
+    la quantità di percorsi possibili può crescere esponenzialmente, o addirittura essere infinita. Non è
+    quindi sempre computabile.
+\end{definition}
+
+\begin{definition}[Ideale]:
+    Vengono presi in considerazione \textbf{solo} i percorsi percorribili sul programma. Ciò non è ovviamente
+    possibile in quanto per sapere quali sono tutti e i soli percorsi possibili dovremmo anche conoscere
+    \emph{tutti} gli input. In pratica è la totale assenza di astrazione e il calcolo dovrebbe essere fatto
+    nel concreto.
+\end{definition}
+
+$$\mathbf{MFP} \leq \mathbf{MOP} \leq \mathbf{Ideale}$$
+
+\subsection{Distributivo vs Non Distributivo}
+I problemi distributivi sono quelli considerati \emph{semplici}, in quanto trattano proprietà riguardanti
+\textbf{come} il programma esegue (\emph{live variables, available expressions, reaching definitions, 
+very busy expressions}). Invece, tipicamente, i problemi non distributivi trattano proprietà
+su \textbf{cosa} il programma calcola (\emph{l'output è una costante, un valore positivo o appartiene ad
+un intervallo}).
+
+\section{Data-flow analysis (Problemi distributivi)}
+\begin{definition}[Data-flow analysis]:
+    La \emph{data-flow analysis} è una tecnica per raccogliere informazioni su \emph{come} i dati si muovono
+    a run time nei vari punti di un programma.
+\end{definition}
+
+%------------------ end amedeo
+
+\clearpage
+\section{Tutte le Analisi}
+
+N.B. In tutte le Analisi che vedremo la Semantica calcola sempre `In'
+
+\subsection{Available Expressions}
+\textbf{Forward \& Definite}\\[1em]
+Un espressione del tipo $x\leftarrow e$ si dice \emph{available} (disponibile) in un dato punto $P$ di programma se:
+\begin{itemize}[noitemsep, topsep=0.3em]
+    \item È definita in un blocco $B$ precedente a $P$
+    \item $x$ non è ridefinita tra $B$ e $P$
+    \item Le variabili di $e$ non sono ridefinite tra $B$ e $P$
+\end{itemize}
+Per ottimizzare il codice si può sostituire il calcolo di un'espressione disponibile con la deferenziazione della variabile in cui è stata assegnata.\\[1em]
+
+\noindent\textbf{Proprietà dei basic blocks (Equazione di punto fisso)}
+\begin{align*}
+    \mbox{AvailIn}(n) &=
+    \begin{cases}
+        \emptyset & n = entry\\
+        \bigcap\limits_{m\in \mbox{Pred}(n)} \mbox{AvailOut}(m)
+    \end{cases}\\
+    \mbox{AvailOut}(m) &= \mbox{Gen}(m) \cup (\mbox{AvailIn}(m) \setminus \mbox{Kill}(m))\\
+    \mbox{Gen}_A(n) &= \left\{
+        x \leftarrow e \;\Bigg\vert
+        \begin{array}{cc}
+            x \leftarrow e \in n\\
+            \land\\
+            x \notin \mbox{Var}(e)
+        \end{array}
+    \right\}
+\end{align*}
+Un assegnamento $x \gets e$ è generato in un blocco $n$ se $x \gets e \in n$ e $x \notin Var(e)$
+\begin{align*}
+    \mbox{Kill}_A(n) &= \left\{
+        x \leftarrow e \;\big\vert\, \exists y \leftarrow e' \in n.\; \big( y \in \mbox{Var}(e) \,\lor\, y=x \big)
+    \right\}
+\end{align*}
+Un assegnamento $x \gets e$ è ucciso in un blocco $n$ se una variabile $y \in e$ è modificata o se $x \in e$.
+
+\noindent\textbf{Semantica (AvailIn)}
+\begin{align*}
+    \mbox{Dominio: }& \mathbb{P}(\mbox{Ass}) \textit{ with Ass = assegnamenti}\\
+    \llbracket ; \rrbracket^\#A &= A\\
+    \llbracket \mbox{zero}(e) \rrbracket^\#A &= A\\
+    \llbracket \mbox{non-zero}(e) \rrbracket^\#A &= A\\
+    \llbracket M[e_1]\leftarrow e_2 \rrbracket^\#A &= A\\
+    \llbracket x \leftarrow e \rrbracket^\#A &=
+    \begin{cases}
+        A \setminus \mbox{Occ}(x) \cup \{x\leftarrow e\} & x\notin \mbox{Var}(e)\\
+        A \setminus \mbox{Occ}(x) & \mbox{otherwise}
+    \end{cases}\\
+    \llbracket x\leftarrow M[e] \rrbracket^\#A &= A\setminus \mbox{Occ}(x)\\
+    \mbox{{\footnotesize where} Occ}(x) &=
+    \left\{
+        y\leftarrow e \;\Bigg\vert
+        \begin{array}{cc}
+            x \in \mbox{Var}(e)\\
+            \lor\\
+            y=x
+        \end{array}
+    \right\}
+\end{align*}
+
+
+\clearpage
+\subsection{Liveness}
+\textbf{Backward \& Possible}\\[1em]
+Una variabile è viva in ogni punto di programma tra la sua definizione e il suo ultimo uso. Per calcolarle partiamo dal fondo e saliamo fino ad un uso della variabile; questa variabile resta viva finchè non troviamo la sua definizione, sopra la quale risulta non viva. Se una avariabile è viva vuol dire che il suo valore può essere letto. È un'analisi di tipo possible, poichè è sufficiente che sia viva in un ramo per renderla viva in quel punto di programma.
+
+Questa analisi risulta utile per cercare codice morto, variabili non inizializzate o registri liberi.\\[1em]
+
+\noindent\textbf{Proprietà dei basic blocks}
+
+\begin{align*}
+\mbox{LiveOut}(n) &=
+\begin{cases}
+    \emptyset & n = exit\\
+    \bigcup\limits_{m\in \mbox{Succ}(n)} \mbox{LiveIn}(m)
+\end{cases}\\
+\mbox{LiveIn}(m) &= \mbox{Gen}(m) \cup (\mbox{LiveOut}(m) \setminus \mbox{Kill}(m))\\
+\mbox{Gen}_{L}(n) &= \left\{
+x \;\big\vert\; \exists e \in n.\; x\in\mbox{Var}(e)
+\right\}\\
+\mbox{Kill}_{L}(n) &= \left\{
+x \;\big\vert\; \exists x\leftarrow e \in n
+\right\}
+\end{align*}
+
+\textbf{Semantica (LiveIn)}
+\begin{align*}
+\mbox{Dominio: }& \mathbb{P}(\mbox{Var})\\
+\llbracket ; \rrbracket^\#L &= L\\
+\llbracket \mbox{zero}(e) \rrbracket^\#L &= L \cup \mbox{Var}(e)\\
+\llbracket \mbox{non-zero}(e) \rrbracket^\#L &= L \cup \mbox{Var}(e)\\
+\llbracket M[e_1]\leftarrow e_2 \rrbracket^\#L &= L \cup \mbox{Var}(e_1) \cup \mbox{Var}(e_2)\\
+\llbracket x \leftarrow e \rrbracket^\#L &= (L\setminus \{x\}) \cup \mbox{Var}(e)\\
+\llbracket x\leftarrow M[e] \rrbracket^\#L &= (L\setminus \{x\}) \cup \mbox{Var}(e)\\
+\end{align*}
+
+
+\clearpage
+\subsection{True Liveness}
+\textbf{Backward \& Possible}
+\begin{align*}
+\mbox{TLiveOut}(n) &=
+\begin{cases}
+\emptyset & n = exit\\
+\bigcup\limits_{m\in \mbox{Succ}(n)} \mbox{TLiveIn}(m)
+\end{cases}\\
+\mbox{TLiveIn}(m) &= \mbox{Gen}(m) \cup (\mbox{TLiveOut}(m) \setminus \mbox{Kill}(m))\\
+\mbox{Gen}_{\TL}(n) &= \{
+x \;\big\vert\; \exists e \in n.\; x\in\mbox{Var}(e) \wedge \\
+[(e \in& (y \leftarrow e) \wedge x \in TL) \vee (e \notin (y \leftarrow e))]
+\}\\
+\mbox{Kill}_{\TL}(n) &= \left\{
+x \;\big\vert\; \exists x\leftarrow e \in n
+\right\}
+\end{align*}
+
+\textbf{Semantica (TLiveIn)}
+\begin{align*}
+\mbox{Dominio: }& \mathbb{P}(\mbox{Var})\\
+\llbracket ; \rrbracket^\#\TL &= \TL\\
+\llbracket \mbox{zero}(e) \rrbracket^\#\TL &= \TL \cup \mbox{Var}(e)\\
+\llbracket \mbox{non-zero}(e) \rrbracket^\#\TL &= \TL \cup \mbox{Var}(e)\\
+\llbracket M[e_1]\leftarrow e_2 \rrbracket^\#\TL &= \TL \cup \mbox{Var}(e_1) \cup \mbox{Var}(e_2)\\
+\llbracket x \leftarrow e \rrbracket^\#\TL &=
+\begin{cases}
+    (\TL\setminus \{x\}) \cup \mbox{Var}(e) & x\in\TL\\
+    (\TL\setminus \{x\}) & \mbox{otherwise}
+\end{cases}\\
+\llbracket x\leftarrow M[e] \rrbracket^\#\TL &=
+\begin{cases}
+    (\TL\setminus \{x\}) \cup \mbox{Var}(e) & x\in\TL\\
+    (\TL\setminus \{x\}) & \mbox{otherwise}
+\end{cases}\\
+\end{align*}
+
+
+\clearpage
+\subsection{Very Busy Expressions}
+\textbf{Backward \& Definite}
+
+\begin{definition}[Busy expression]:
+    Un assegnamento \textit{k} è \textit{busy} su un cammino $\pi$ se $\pi \equiv \pi_1 ~k~ \pi_2$ con:
+    \begin{itemize}
+    	\item $k$ è un assegnamento ($x\gets e$);
+    	\item $\pi_1$ non contiene utilizzi di $x$ ($x$ non compare r-side);
+    	\item $\pi_2$ non contiene modifiche di $\{x\}\cup Var(e)$ ($x$ non compare l-side, nessuna delle 
+    	    variabili r-side nell'assegnamento di $x$ viene modificata);
+    \end{itemize}
+\end{definition}
+
+\begin{definition}[Very busy expression]:
+    Un assegnamento si dice \emph{very busy} in $s$ se risulta \emph{busy} su ogni path da $v$ ad $exit$.
+\end{definition}
+
+\begin{align*}
+\mbox{\VB Out}(n) &=
+\begin{cases}
+\emptyset & n = exit\\
+\bigcap\limits_{m\in \mbox{Succ}(n)} \mbox{\VB In}(m)
+\end{cases}\\
+\mbox{\VB In}(m) &= \mbox{Gen}(m) \cup (\mbox{\VB Out}(m) \setminus \mbox{Kill}(m))\\
+\mbox{Gen}_{\VB}(n) &= \left\{
+x\leftarrow e \in n\;\big\vert\; x \notin\mbox{Var}(e)
+\right\}
+\end{align*}
+Un assegnamento $x \gets e$ è generato in un blocco $n$ se $x \notin \mbox{Var}(e)$
+\begin{align*}
+\mbox{Kill}_{\VB}(n) &= \left\{
+    x\leftarrow e \;\Big\vert\; 
+    \begin{array}{cc}
+        \exists y\leftarrow e'\in n.\, x\in \mbox{Var}(e') \;\lor\;
+        y\in \mbox{Var}(e)\; \;\lor\;
+        x = y\\
+        \vee \quad \exists e' \in n. x\in \mbox{Var}(e')
+    \end{array}
+\right\}
+\end{align*}
+Un assegnamento $x \gets e$ è ucciso in un blocco $n$ se una variabile $y \in e$ è modificata o se $x$ viene utilizzata nel blocco.
+
+\textbf{Semantica}
+\begin{align*}
+\mbox{Dominio: }& \mathbb{P}(\mbox{Ass})\\
+\llbracket ; \rrbracket^\#\VB &= \VB\\
+\llbracket \mbox{zero}(e) \rrbracket^\#\VB &= \VB \setminus \mbox{Ass}(e)\\
+\llbracket \mbox{non-zero}(e) \rrbracket^\#\VB &= \VB \setminus \mbox{Ass}(e)\\
+\llbracket M[e_1]\leftarrow e_2 \rrbracket^\#\VB &= \VB \setminus (\mbox{Ass}(e_1) \cup \mbox{Ass}(e_2))\\
+\llbracket x \leftarrow e \rrbracket^\#\VB &= 
+\begin{cases}
+\VB \setminus (\mbox{Occ}(x) \cup \mbox{Ass}(e)) \cup \{x\leftarrow e\}& \mbox{if } x \notin \mbox{Var}(e)\\
+\VB \setminus (\mbox{Occ}(x) \cup \mbox{Ass}(e)) & \mbox{otherwise}
+\end{cases}\\
+\llbracket x\leftarrow M[e] \rrbracket^\#\VB &= \VB \setminus (\mbox{Occ}(x) \cup \mbox{Ass}(e))\\[1em]
+\mbox{{\footnotesize where} Occ}(x) &=
+\left\{
+    y\leftarrow e \;\Bigg\vert
+    \begin{array}{cc}
+        x \in \mbox{Var}(e)\\
+        \lor\\
+        y=x
+    \end{array}
+\right\}\\
+\mbox{{\footnotesize and} Ass}(e) &=
+\left\{
+y\leftarrow e' \in Ass \;\big\vert\;
+y \in \mbox{Var}(e) \,\land\, e \neq M[e]
+\right\}\\
+\end{align*}
+
+
+\clearpage
+\subsection{Reaching Definitions}
+\textbf{Forward \& Possible}\\[1em]
+Le reaching definitions ci dicono, per ogni punto di programma, le variabili che sono disponibili e in che punto di programma sono state definite. Per ogni punto quindi si ha un insieme di coppie. A seconda del cammino percorso le definizioni disponibili potrebbero essere diverse, per questo ad una variabile possono corrispondere più punti di programma, rendendo così l'analisi di tipo possible.
+\\[1em]
+
+\noindent\textbf{Proprietà dei basic blocks}
+\begin{align*}
+    \mbox{\RD In}(n) &=
+    \begin{cases}
+        \emptyset & n = entry\\
+        \bigcup\limits_{m\in \mbox{Pred}(n)} \mbox{\RD Out}(m)
+    \end{cases}\\
+    \mbox{\RD Out}(m) &= \mbox{Gen}(m) \cup (\mbox{\RD In}(m) \setminus \mbox{Kill}(m))\\
+    \mbox{Gen}_{\RD}(n) &= \left\{
+        (x,n) \;\big\vert\; \exists x\leftarrow e \in n
+    \right\}\\
+    \mbox{Kill}_{\RD}(n) &= \left\{
+        (x,n') \;\big\vert\; \exists x\leftarrow e \in n \land \exists (x,n')\in\RD(n)
+    \right\}
+\end{align*}
+
+\textbf{Semantica}
+\begin{align*}
+    \mbox{Dominio: }& \mathbb{P}(\mbox{Var $\times$ ProgPoints})\\
+    \llbracket ; \rrbracket^\#\RD &= \RD\\
+    \llbracket \mbox{zero}(e) \rrbracket^\#\RD &= \RD\\
+    \llbracket \mbox{non-zero}(e) \rrbracket^\#\RD &= \RD\\
+    \llbracket M[e_1]\leftarrow e_2 \rrbracket^\#\RD &= \RD\\
+    \llbracket x \leftarrow e \rrbracket^\#\RD &= (\RD\setminus \mbox{Def}(x)) \cup
+    \left\{
+        (x, u) \;\big\vert\, K = (u, x\leftarrow e, v)
+    \right\}\\
+    \llbracket x\leftarrow M[e] \rrbracket^\#\RD &= (\RD\setminus \mbox{Def}(x)) \cup
+    \left\{
+        (x, u) \;\big\vert\, K = (u, x\leftarrow M[e], v)
+    \right\}\\[1em]
+    \mbox{{\footnotesize where} Def}(x) &=
+    \left\{
+        (x, n) \;\big\vert\, n \mbox{ punto di programma}
+    \right\}\\
+    \mbox{\footnotesize and } K &= 
+    \begin{array}{ll}
+        \mbox{Arco che stiamo analizzando, rappresentato da una}\\
+        \mbox{tupla di: [nodo di partenza, istruzione, nodo di arrivo]}
+    \end{array}
+\end{align*}
+
+
+\clearpage
+\subsection{Copy Propagation}
+\textbf{Forward \& Definite}\\[1em]
+L'analisi di copy propagation ci dice, per ogni punto di programma, l'insieme di coppie di variabili che contengono lo stesso valore. È un'analisi di tipo forward e definite, che può essere utilizzata nelle ottimizzazione per evitare copie inutili. L'unica istruzione che genera una nuova coppia è $x\leftarrow y$, mentre ogni altra modifica di una di queste variabili uccide tutte le coppie in cui è presente.\\[1em]
+\noindent\textbf{Proprietà dei basic blocks}
+\begin{align*}
+    \mbox{CopyIn}(n) &=
+    \begin{cases}
+    \emptyset & n = entry\\
+    \bigcap\limits_{m\in \mbox{Pred}(n)} \mbox{CopyOut}(m)
+    \end{cases}\\
+    \mbox{CopyOut}(m) &= \mbox{Gen}(m) \cup (\mbox{CopyIn}(m) \setminus \mbox{Kill}(m))\\
+    \mbox{Gen}_{C}(n) &= \left\{
+    (x\; y) \;\big\vert\; \exists\, x\leftarrow y \in n
+    \right\}\\
+    \mbox{Kill}_{C}(n) &= \left\{
+    (x\; y) \;\big\vert\; \exists\, x\leftarrow e \in n \,\lor\, \exists\, y\leftarrow e \in n
+    \right\}
+\end{align*}
+
+\textbf{Semantica}
+\begin{align*}
+    \mbox{Dominio: }& \mathbb{P}(\mbox{Var $\times$ Var})\\
+    \llbracket ; \rrbracket^\#C &= C\\
+    \llbracket \mbox{zero}(e) \rrbracket^\#C &= C\\
+    \llbracket \mbox{non-zero}(e) \rrbracket^\#C &= C\\
+    \llbracket M[e_1]\leftarrow e_2 \rrbracket^\#C &= C\\
+    \llbracket x \leftarrow e \rrbracket^\#C &= C\setminus \mbox{Copie}(x)\quad e\notin Var\\
+    \llbracket x \leftarrow M[e] \rrbracket^\#C &= C\setminus \mbox{Copie}(x)\\
+    \llbracket x\leftarrow y \rrbracket^\#C &= (C\setminus \mbox{Copie}(x)) \cup (x\;y) \cup
+    \left\{
+        (x\; z) \;\big\vert\; (z\; y) \in C
+    \right\}\\[1em]
+    \mbox{{\footnotesize where} Copie}(x) &=
+    \left\{
+    (x\; y) \;\big\vert\, (x\; y) \in C
+    \right\}\\
+\end{align*}
+
+
+\clearpage
+\subsection{Intervals}
+\textbf{Non-Distributive, Forward \& Possible}\\[1em]
+Questa analisi è solo semantica, in quanto ci dice cosa calcola un programma. Per ogni punto viene associato ad ogni variabile un intervallo che comprende i valori che questa può assumere. È perciò necessario definire nella semantica le operazioni tra intervalli per ogni possibile istruzione, incluse operazioni aritmetiche e di confronto.
+
+In alcuni casi però i cicli possono essere ripetuti molte volte, per cui si utilizza il \textbf{widening}: se dopo due iterazioni un estremo di un intervallo continua a crescere lo si approssima con l'infinito. Una volta raggiunto il punto fisso è possibile applicare il narrowing per restringere l'intervallo.\\[1em]
+
+\textbf{Semantica}
+\begin{align*}
+\mbox{Dominio: }& \mathbb{I}=\{[l,\,u]\;\big\vert\; l\in\mathbb{Z}\cup\{-\infty\},\; u\in\mathbb{Z}\cup\{+\infty\},\; l\leq u\}\\
+&\mbox{\footnotesize Il dominio per lanalisi è} \; Var \rightarrow \mathbb{I}\\
+\llbracket ; \rrbracket^\#I &= I\\
+\llbracket \mbox{zero}(e) \rrbracket^\#I &= 
+\begin{cases}
+    \bot & [0, 0] \not\sqsubseteq \llbracket e \rrbracket^\#I\\
+    I\sqcap\llbracket e \rrbracket^\#I & otherwise
+\end{cases}\\
+\llbracket \mbox{non-zero}(e) \rrbracket^\#I &= 
+\begin{cases}
+    \bot & [0, 0] = \llbracket e \rrbracket^\#I\\
+    I\sqcap\llbracket e \rrbracket^\#I & otherwise
+\end{cases}\\
+\llbracket M[e_1]\leftarrow e_2 \rrbracket^\#I &= I\\
+\llbracket x \leftarrow e \rrbracket^\#I &= I[x\mapsto\llbracket e \rrbracket^\#I]\\
+\llbracket x \leftarrow M[e] \rrbracket^\#I &= I[x\mapsto\top]
+\\\\
+\llbracket e_1 \;\square\; e_2 \rrbracket^\#S &= \llbracket e_1  \rrbracket^\#S \;\square^\#\; \llbracket e_2 \rrbracket^\#S\\
+\mbox{\footnotesize where } \square & \mbox{ \footnotesize is the operator}
+\end{align*}
+%    \mbox{\footnotesize where } I' &= (I \oplus I(x\mapsto I\{x\} \sqcap [-\infty,\; u]))\; \lor\\
+%    & \hspace{1.25em} (I \oplus I(x\mapsto I\{x\} \sqcap [l,\; +\infty]))\;\; \mbox{\textit{According to} } \llbracket e \rrbracket^\#I    
+
+\textbf{Widening} ($\nabla$)
+\begin{align*}
+    \bot\nabla I = I\,\nabla\bot = &I\\[0.5em]
+    (I_1 \nabla I_2)(x) = I_1(x)\nabla I_2(x) &\mbox{ \footnotesize where } [l_1,\;u_1]\nabla[l_2,\;u_2] = [l,\;u] \mbox{ \footnotesize such that}\\
+    l =
+    \begin{cases}
+        l_1 & \mbox{if } l_1 \leq l_2\\
+        -\infty & \mbox{otherwise}
+    \end{cases}
+    \quad &u =
+    \begin{cases}
+        u_1 & \mbox{if } u_1 \geq u_2\\
+        +\infty & \mbox{otherwise}
+    \end{cases}
+\end{align*}
+
+\clearpage
+\subsection{Segni}
+\textbf{Non-Distributive, Forward \& Possible}\\[1em]
+Quella dei segni è un'analisi simile agli intervalli, ma semplificata, in cui le variabili possono assumere, nel dominio astratto, solo i valori positivo o negativo, con lo 0 incluso. Anche in questo caso dobbiamo definire le come le operazioni aritmetiche modificano il dominio.\\[1em]
+
+\textbf{Semantica}
+\begin{align*}
+\mbox{Dominio: }& \mathbb{S}=\{ \top, \mathbb{Z}_0^+, \mathbb{Z}^+, \mathbb{Z}_0^-, \mathbb{Z}^-, 0, \neq\!0, \bot \}\\
+&\mbox{\footnotesize Il dominio per lanalisi è} \; Var \rightarrow \mathbb{S}\\
+\llbracket ; \rrbracket^\#S &= S\\
+\llbracket \mbox{zero}(e) \rrbracket^\#S &= 
+\begin{cases}
+\bot & 0 \not\sqsubseteq \llbracket e \rrbracket^\#S\\
+S\sqcap\llbracket e \rrbracket^\#S & otherwise
+\end{cases}\\
+\llbracket \mbox{non-zero}(e) \rrbracket^\#S &= 
+\begin{cases}
+\bot & 0 = \llbracket e \rrbracket^\#S\\
+S\sqcap\llbracket e \rrbracket^\#S & otherwise
+\end{cases}\\
+\llbracket M[e_1]\leftarrow e_2 \rrbracket^\#S &= S\\
+\llbracket x \leftarrow e \rrbracket^\#S &= S[x\mapsto\llbracket e \rrbracket^\#S]\\
+\llbracket x \leftarrow M[e] \rrbracket^\#S &= S[x\mapsto \top]\\
+%\mbox{\footnotesize where } S' &= \mbox{\textit{The sign evaluation of} } \llbracket e \rrbracket^\#S
+\\
+\llbracket e_1 \;\square\; e_2 \rrbracket^\#S &= \llbracket e_1  \rrbracket^\#S \;\square^\#\; \llbracket e_2 \rrbracket^\#S\\
+\mbox{\footnotesize where } \square & \mbox{ \footnotesize is the operator}
+\end{align*}
+
+\begin{figure}[htp]
+    \centering
+    \begin{tikzpicture}
+        \node (n1) at (0,0) {$\top$};
+        \node [below of=n1] (n3) {$\neq0$};
+        \node [left of=n3] (n2) {$\mathbb{Z}_0^+$};
+        \node [right of=n3] (n4) {$\mathbb{Z}_0^-$};
+        \node [below of=n3] (n6) {$0$};
+        \node [right of=n6] (n7) {$\mathbb{Z}^-$};
+        \node [left of=n6] (n5) {$\mathbb{Z}^+$};
+        \node [below of=n6] (n8) {$\bot$};
+        
+        \draw [thin, shorten <=-2pt, shorten >=-2pt] (n1)--(n4);
+        \draw [thin, shorten <=-2pt, shorten >=-2pt] (n1)--(n2);
+        \draw [thin, shorten <=-2pt, shorten >=-2pt] (n4)--(n6);
+        \draw [thin, shorten <=-2pt, shorten >=-2pt] (n2)--(n6);
+        \draw [thin, shorten <=-2pt, shorten >=-2pt] (n3)--(n7);
+        \draw [thin, shorten <=-2pt, shorten >=-2pt] (n3)--(n5);
+        \draw [thin, shorten <=-2pt, shorten >=-2pt] (n7)--(n8);
+        \draw [thin, shorten <=-2pt, shorten >=-2pt] (n5)--(n8);
+        \draw [thin, shorten <=-2pt, shorten >=-2pt] (n4)--(n7);
+        \draw [thin, shorten <=-2pt, shorten >=-2pt] (n2)--(n5);
+        \draw [thin, shorten <=-2pt, shorten >=-2pt] (n1)--(n3);
+        \draw [thin, shorten <=-2pt, shorten >=-2pt] (n6)--(n8);
+    \end{tikzpicture}
+    \caption{Il Dominio dei Segni}\label{fig:dominiodeisegni}
+\end{figure}
+
+\newpage
+\clearpage
+\section{Esercizi}
+\subsection*{Available Expressions}
+\begin{tabular}{cc}
+\begin{minipage}{0.5\textwidth}
+\textbf{Codice}
+\begin{lstlisting}{}
+    y = 1;
+    v = x;
+    while y != z
+        t = 2y;
+        if t <= z then
+            v = v^2;
+            y = 2y;
+        else
+            v = vx;
+            y = y+1;
+\end{lstlisting}
+%\columnbreak
+\end{minipage}&
+
+\noindent
+\begin{minipage}{0.5\textwidth}
+Ass $= \{y\leftarrow1,\;v\leftarrow x,\;t\leftarrow2y\}$\\[0.5em]
+\begin{tabular}{c | l | l}
+    & Gen & Kill\\
+    \hline
+    1  & $y\leftarrow1$ & $t\leftarrow2y$\\
+    2  & $v\leftarrow x$ & $\emptyset$\\
+    3  & $\emptyset$ & $\emptyset$\\
+    4  & $t\leftarrow2y$ & $\emptyset$\\
+    5  & $\emptyset$ & $\emptyset$\\
+    6  & $\emptyset$ & $v\leftarrow x$\\
+    7  & $\emptyset$ & $t\leftarrow2y,\; y\leftarrow1$\\
+    8  & $\emptyset$ & $v\leftarrow x$\\
+    9  & $\emptyset$ & $t\leftarrow2y,\; y\leftarrow1$\\
+    10 & $\emptyset$ & $\emptyset$\\
+\end{tabular}
+\end{minipage}
+\end{tabular}
+
+\begin{minipage}{0.5\textwidth}
+\textbf{CFG - MOP}\\
+%\begin{wrapfigure}{l}{0.5\textwidth}
+    \begin{tikzpicture}[>=stealth',auto,node distance=1cm]
+    \small
+    \node[label=right: $^0$] (0) {entry};
+    \node[draw, below of=0, label=right: $^1$] (1) {$y\leftarrow1$};
+    \node[draw, below of=1, label=right: $^2$] (2) {$v\leftarrow x$};
+    \node[draw, below of=2, label=left: $^3$] (3) {$y\neq z$};
+    \node[draw, below of=3, label=right: $^4$] (4) {$t\leftarrow2y$};
+    \node[draw, below of=4, label=right: $^5$] (5) {$t\leq z$};
+    \node[node distance = 2cm, draw, below left of=5, label=right: $^6$] (6) {$v\leftarrow v^2$};
+    \node[draw, below of=6, label=right: $^7$] (7) {$y\leftarrow2y$};
+    \node[node distance = 2cm, draw, below right of=5, label=right: $^8$] (8) {$v\leftarrow vx$};
+    \node[draw, below of=8, label=right: $^9$] (9) {$y\leftarrow y+1$};
+    \node[node distance = 3cm, right of=3, label=right: $^{10}$] (10) {exit};
+    
+    \path[->] (0) edge (1)
+    (1) edge (2)
+    (2) edge (3)
+    (3) edge (4)
+    (4) edge (5)
+    (5) edge (6)
+    (5) edge (8)
+    (6) edge (7)
+    (7) edge[bend left=65] (3)
+    (8) edge (9)
+    (9) edge[bend right=70] (3)
+    (3) edge (10);
+    
+    \end{tikzpicture}
+%\end{wrapfigure}
+%\columnbreak
+\end{minipage}
+
+\begin{minipage}{0.5\textwidth}
+\begin{tabular}{c | l | l | l}
+    AvailIn & $\emptyset$ & 1 & 2\\
+    \hline
+    1  & $\emptyset$ & $\emptyset$ & $\emptyset$\\
+    2  & $T$ & $y\leftarrow1$ & $y\leftarrow1$\\
+    3  & $T$ & $v\leftarrow x,\; y\leftarrow1$ & $\emptyset$\\
+    4  & $T$ & $v\leftarrow x,\; y\leftarrow1$ & $\emptyset$\\
+    5  & $T$ & $t\leftarrow2y,\; v\leftarrow x, y\leftarrow1$ & $t\leftarrow2y$\\
+    6  & $T$ & $t\leftarrow2y,\; v\leftarrow x, y\leftarrow1$ & $t\leftarrow2y$\\
+    7  & $T$ & $t\leftarrow2y,\; y\leftarrow1$ & $t\leftarrow2y$\\
+    8  & $T$ & $t\leftarrow2y,\; v\leftarrow x, y\leftarrow1$ & $t\leftarrow2y$\\
+    9  & $T$ & $t\leftarrow2y,\; y\leftarrow1$ & $t\leftarrow2y$\\
+    10 & $T$ & $v\leftarrow x,\; y\leftarrow1$ & $\emptyset$\\
+\end{tabular}
+\end{minipage}\\[2em]
+
+\begin{minipage}{0.5\textwidth}
+\textbf{CFG - Semantics}\\
+\begin{tikzpicture}[>=stealth',auto,node distance=1.5cm]
+
+\node[draw, circle] (1) {$1$};
+\node[draw, circle, below of=1] (2) {$2$};
+\node[draw, circle, below of=2] (3) {$3$};
+\node[draw, circle, node distance=2cm, below left of=3] (4) {$4$};
+\node[draw, circle, below of=4] (5) {$5$};
+\node[draw, circle, node distance=2cm, below left of=5] (6) {$6$};
+\node[draw, circle, below of=6] (7) {$7$};
+\node[draw, circle, node distance=2cm, below right of=5] (8) {$8$};
+\node[draw, circle, below of=8] (9) {$9$};
+\node[draw, circle, node distance=2cm, xshift=5pt, below right of=3] (10) {$10$};
+
+
+
+\path[->] (1) edge node[right] {$y\leftarrow1$} (2)
+          (2) edge node[right] {$v\leftarrow x$} (3)
+          (3) edge node[right] {$y\neq z$} (4)
+          (4) edge node[right] {$t\leftarrow2y$} (5)
+          (5) edge node[right] {$t\leq z$} (6)
+          (5) edge node[right] {$\neg\, t\leq z$} (8)
+          (6) edge node[right] {$v\leftarrow v^2$} (7)
+          (7) edge[bend left=70] node[right] {$y\leftarrow2y$} (3)
+          (8) edge node[left] {$v\leftarrow vx$} (9)
+          (9) edge[bend right=40] node[right] {$y\leftarrow y+1$} (3)
+          (3) edge node[right] {$\neg\, y\neq z$} (10);
+
+\end{tikzpicture}
+\end{minipage}
+\end{document}
