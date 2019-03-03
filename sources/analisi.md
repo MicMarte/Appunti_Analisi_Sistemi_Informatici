@@ -1,6 +1,6 @@
 # Spiegazione testuale analisi
 
-## Collecting semantcs
+## Collecting semantics
 
 Quando si analizza un programma è utile studiare le tracce; una traccia di esecuzione è una sequenza di stati raggiunti da una singola esecuzione in ogni punto di programma. Analizzare le tracce è un'operazione molto onerosa, che richiede il salvataggio in memoria di tutte gli stati raggiunti per ogni traccia. Oltre agli stati vanno memorizzati anche i collegamenti tra essi, in modo che ogni traccia abbia la propria catena di stati. Per semplificare ciò si può usare un'approssimazione: la Collecting Semantincs. In sostanza ad ogni punto di programma è associato un bucket che contiene tutti gli stati che sono stati raggiunti da una qualsiasi delle tracce in quel punto. Questa approssimazione però perde il collegamento tra stati, rendendo impossibile ricostruire la catena degli stati di una singola traccia. Questo potrebbe quindi includere tracce che non possono verificarsi, ma che sono ammesse dagli stati raggiungibili. *(vedi figura)*.
 
